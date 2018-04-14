@@ -8,6 +8,8 @@ _Smoosh is based on the sample 'monkey' language as defined in the book 'Writing
 
 ## A simple smoosh script
 
+Smoosh will look a bit like this … (this isn't actually implemented yet)
+
 ```
    #!/usr/bin/smoosh
    var x = $("ls", "-1")
