@@ -10,8 +10,8 @@ _Smoosh is based on the sample 'monkey' language as defined in the book 'Writing
 
 ```
    #!/usr/bin/smoosh
-   var x = $(ls -1)
-   echo x | $("grep 1") \
+   var x = $("ls", "-1")
+   echo x | $("grep", "1") \
           | >("out.log") \
           |2 $("tee", "err.log")
 ```
@@ -26,13 +26,14 @@ _Smoosh is based on the sample 'monkey' language as defined in the book 'Writing
 * `$""` for running external commands. _NOTE: `$()` should be used for running commands inline, as in bash._
 * `|` for piping. _Hopefully, typed pipes for slices._
 * Unicode support.
-* _Maybe_ unicode equivalents for readability. You'd type ascii as above and then `-fmt` would reformat to some equivalent like this ...
+* _Maybe_ unicode equivalents for readability. You'd type ascii as above and then `-fmt` would reformat to some equivalent like this ... maybe too crazy, eh
 ```
-   echo x 🡒 $"grep 1" ⤸
-          ⤷ "out.log" ⤸
-          ⤷ₑ $"tee" "123"
+   echo x 🡒 $"grep", "1" ⤸
+          ⤷ >"out.log" ⤸
+          ⤷ₑ $"tee", "123"
 ```
 * Go templating in place of bourne-style interpolation
+* Maybe remove parameter commas to increase shellishness
 
 # Relevant excerpts from 'Writing An Interpreter In Go's README:
 
