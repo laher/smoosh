@@ -1,10 +1,10 @@
 # Smoosh
 
-Smoosh is an experimental shell languae written in Go. 
+Smoosh is an experimental shell language written in Go. 
 
-Smoosh is intended a programming language with some esoteric shell features 'bolted on' (or _smooshed together_).
+Smoosh is intended as primarily a programming language with shell features 'bolted on' (or _smooshed on top_).
 
-Smoosh is based on the sample 'monkey' language as described in the book 'Writing an Interpreter in Go'.
+_Smoosh is based on the sample 'monkey' language as defined in the book 'Writing an Interpreter in Go' by Thorsten Ball (Smoosh retains Monkey's MIT license)._
 
 ## A simple smoosh script
 
@@ -19,32 +19,30 @@ Smoosh is based on the sample 'monkey' language as described in the book 'Writin
 ## Planned features
 
 * Basic features similar to 'monkey', but `let` replaced with initialisation (`var` keyword) and plain reassignment.
-* repl to be purposed as a shell environment - builtins such as `cd`, `alias`, `unalias`
-* A rich standard library (based on parts of Go's standard lib)
+* repl to be purposed as a shell environment - builtins such as `cd`, `alias`, `unalias`, `exit`
 * `smoosh -fmt` to format a smoosh script to a standard
+* Padding out several fundamental language features missing from monkey (floats, …)
+* A rich standard library (based on parts of Go's standard lib)
 * `$""` for running external commands. _NOTE: `$()` should be used for running commands inline, as in bash._
-* `|` for piping.
-* _Maybe_ unicode equivalents for readability. You type as above and then `-fmt` would reformat as follows ...
+* `|` for piping. _Hopefully, typed pipes for slices._
+* Unicode support.
+* _Maybe_ unicode equivalents for readability. You'd type ascii as above and then `-fmt` would reformat to some equivalent like this ...
 ```
    echo x 🡒 $"grep 1" ⤸
           ⤷ "out.log" ⤸
           ⤷ₑ $"tee 123"
 ```
+* Go templating in place of bourne-style interpolation
 
-# Original Copyright from 'Writing An Interpreter In Go'
+# Relevant excerpts from 'Writing An Interpreter In Go's README:
 
-Thank you for purchasing "Writing An Interpreter In Go"!
-
-...
-
+_Thank you for purchasing "Writing An Interpreter In Go"!_
+… 
 Copyright © 2016-2017 Thorsten Ball
 All rights reserved.
 "Writing An Interpreter In Go" is copyright Thorsten Ball.
+… 
+the contents `code` folder are licensed under the MIT license
+(https://opensource.org/licenses/MIT). See the `LICENSE` file 
+… 
 
-No part of this publication may be reproduced, stored in a retrieval system, or
-transmitted, in any form, or by any means, electronic, mechanical, photocopying,
-recording, or otherwise, without the prior consent of the publisher.
-
-EXCEPT: the contents `code` folder are licensed under the MIT license
-(https://opensource.org/licenses/MIT). See the `LICENSE` file in the `code`
-folder.
