@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"hash/fnv"
-	"monkey/ast"
 	"strings"
+
+	"github.com/laher/smoosh/ast"
 )
 
 type BuiltinFunction func(args ...Object) Object

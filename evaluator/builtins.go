@@ -2,7 +2,8 @@ package evaluator
 
 import (
 	"fmt"
-	"monkey/object"
+
+	"github.com/laher/smoosh/object"
 )
 
 var builtins = map[string]*object.Builtin{

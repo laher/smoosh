@@ -2,8 +2,9 @@ package evaluator
 
 import (
 	"fmt"
-	"monkey/ast"
-	"monkey/object"
+
+	"github.com/laher/smoosh/ast"
+	"github.com/laher/smoosh/object"
 )
 
 var (

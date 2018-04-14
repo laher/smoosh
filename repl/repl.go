@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"monkey/evaluator"
-	"monkey/lexer"
-	"monkey/object"
-	"monkey/parser"
+
+	"github.com/laher/smoosh/evaluator"
+	"github.com/laher/smoosh/lexer"
+	"github.com/laher/smoosh/object"
+	"github.com/laher/smoosh/parser"
 )
 
 const PROMPT = ">> "

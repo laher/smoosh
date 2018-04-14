@@ -2,10 +2,11 @@ package parser
 
 import (
 	"fmt"
-	"monkey/ast"
-	"monkey/lexer"
-	"monkey/token"
 	"strconv"
+
+	"github.com/laher/smoosh/ast"
+	"github.com/laher/smoosh/lexer"
+	"github.com/laher/smoosh/token"
 )
 
 const (

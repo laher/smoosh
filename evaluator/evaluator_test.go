@@ -1,10 +1,11 @@
 package evaluator
 
 import (
-	"monkey/lexer"
-	"monkey/object"
-	"monkey/parser"
 	"testing"
+
+	"github.com/laher/smoosh/lexer"
+	"github.com/laher/smoosh/object"
+	"github.com/laher/smoosh/parser"
 )
 
 func TestEvalIntegerExpression(t *testing.T) {
