@@ -4,6 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"os"
+	"os/user"
+	"path"
 
 	"github.com/laher/smoosh/evaluator"
 	"github.com/laher/smoosh/lexer"
@@ -11,14 +14,20 @@ import (
 	"github.com/laher/smoosh/parser"
 )
 
-const PROMPT = ">> "
-
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
 	env := object.NewEnvironment()
-
+	user, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
 	for {
-		fmt.Printf(PROMPT)
+		pwd, err := os.Getwd()
+		if err != nil {
+			panic(err)
+		}
+		prompt := fmt.Sprintf("[%s]/[%s]> ", user.Username, path.Base(pwd))
+		fmt.Printf(prompt)
 		scanned := scanner.Scan()
 		if !scanned {
 			return

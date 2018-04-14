@@ -11,9 +11,9 @@ _Smoosh is based on the sample 'monkey' language as defined in the book 'Writing
 ```
    #!/usr/bin/smoosh
    var x = $(ls -1)
-   echo x | $"grep 1" \
-          |> "out.log" \
-          |2 $"tee err.log"
+   echo x | $("grep 1") \
+          | >("out.log") \
+          |2 $("tee", "err.log")
 ```
 
 ## Planned features
@@ -30,7 +30,7 @@ _Smoosh is based on the sample 'monkey' language as defined in the book 'Writing
 ```
    echo x 🡒 $"grep 1" ⤸
           ⤷ "out.log" ⤸
-          ⤷ₑ $"tee 123"
+          ⤷ₑ $"tee" "123"
 ```
 * Go templating in place of bourne-style interpolation
 
