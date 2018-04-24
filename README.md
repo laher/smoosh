@@ -22,7 +22,7 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
 
 * Basic features similar to 'monkey', but `let` replaced with initialisation (`var` keyword) and plain reassignment.
 * repl to be purposed as a shell environment - builtins such as `cd`, `alias`, `unalias`, `exit`
-* `smoosh -fmt` to format a smoosh script to a standard
+* `smoosh-fmt` to format a smoosh script to a standard
 * Padding out several fundamental language features missing from monkey (floats, …)
 * A rich standard library (based on parts of Go's standard lib)
 * `$""` for running external commands. _NOTE: `$()` should be used for running commands inline, as in bash._
