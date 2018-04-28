@@ -266,7 +266,6 @@ func (ce *CallExpression) String() string {
 	out.WriteString(strings.Join(args, ", "))
 	out.WriteString(")")
 
-	out.WriteString("\n")
 	return out.String()
 }
 

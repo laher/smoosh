@@ -19,7 +19,7 @@ func main() {
 	}
 
 	// Run a Smoosh script
-	if err := runner.RunFile(flag.Arg(0)); err != nil {
+	if err := runner.RunFile(flag.Arg(0), os.Stdout); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

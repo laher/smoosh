@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"os"
 
 	"github.com/laher/smoosh/evaluator"
 	"github.com/laher/smoosh/lexer"
@@ -15,27 +14,28 @@ import (
 	"github.com/laher/smoosh/token"
 )
 
-func (r *Runner) RunAll(rdr io.Reader) error {
+// RunAll runs an io.Reader as a single program
+func (r *Runner) RunAll(rdr io.Reader, out io.Writer) error {
 	data, err := ioutil.ReadAll(rdr)
 	if err != nil {
 		return fmt.Errorf("could not read: %v", err)
 	}
 
-	return r.runData(data)
+	return r.runData(data, out)
 }
 
-func (r *Runner) RunFile(filename string) error {
+// RunFile runs a file as a single program
+func (r *Runner) RunFile(filename string, out io.Writer) error {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return fmt.Errorf("could not read %s: %v", filename, err)
 	}
 
-	return r.runData(data)
+	return r.runData(data, out)
 }
 
-func (r *Runner) runData(data []byte) error {
+func (r *Runner) runData(data []byte, out io.Writer) error {
 	l := lexer.New(string(data))
-	out := os.Stdout
 	if r.Parse {
 		p := parser.New(l)
 		program := p.ParseProgram()
