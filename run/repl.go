@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/user"
 	"path"
@@ -24,10 +25,12 @@ type Runner struct {
 	Format   bool
 }
 
-func isPipedInput() bool {
-	stat, _ := os.Stdin.Stat()
-	if (stat.Mode() & os.ModeCharDevice) == 0 {
-		return true
+func isPipedInput(in io.Reader) bool {
+	if stdin, ok := in.(*os.File); ok {
+		stat, _ := stdin.Stat()
+		if (stat.Mode() & os.ModeCharDevice) == 0 {
+			return true
+		}
 	}
 	return false
 }
@@ -40,22 +43,31 @@ func (r *Runner) Start(in io.Reader, out io.Writer) {
 	if err != nil {
 		panic(err)
 	}
-	for {
-		if !isPipedInput() {
-			pwd, err := os.Getwd()
-			if err != nil {
-				panic(err)
-			}
-			prompt := fmt.Sprintf("[%s]/[%s]> ", user.Username, path.Base(pwd))
-			fmt.Printf(prompt)
+	if isPipedInput(in) {
+		all, err := ioutil.ReadAll(in)
+		if err != nil {
+			panic(err)
 		}
+		err = r.runData(string(all), out, env)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+	for {
+		pwd, err := os.Getwd()
+		if err != nil {
+			panic(err)
+		}
+		prompt := fmt.Sprintf("[%s]/[%s]> ", user.Username, path.Base(pwd))
+		fmt.Printf(prompt)
 		scanned := scanner.Scan()
 		if !scanned {
 			return
 		}
 
 		line := scanner.Text()
-		err := r.runData(line, out, env)
+		err = r.runData(line, out, env)
 		if err != nil {
 			panic(err)
 		}
