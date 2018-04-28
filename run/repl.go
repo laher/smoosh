@@ -1,9 +1,5 @@
-/*
-Package repl provides a hook into the smoosh interpreter.
-
-
-*/
-package repl
+// Package run provides a hook into the smoosh interpreter.
+package run
 
 import (
 	"bufio"

@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/laher/smoosh/repl"
+	"github.com/laher/smoosh/run"
 )
 
 func main() {
 	flag.Parse()
 
-	runner := repl.NewRunner()
+	runner := run.NewRunner()
 	if len(flag.Args()) == 0 {
 		runner.Start(os.Stdin, os.Stdout)
 		return
