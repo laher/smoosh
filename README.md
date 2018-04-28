@@ -11,7 +11,6 @@ _Smoosh is based on the sample 'monkey' language as defined in the book 'Writing
 Smoosh will look a bit like this … (this isn't actually implemented yet)
 
 ```
-   #!/usr/bin/smoosh
    var x = $("ls", "-1")
    echo x | $("grep", "1") \
           | >("out.log") \
@@ -20,15 +19,29 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
 
 ## Planned features
 
-* Basic features similar to 'monkey', but `let` replaced with initialisation (`var` keyword) and plain reassignment.
-* repl to be purposed as a shell environment - builtins such as `cd`, `alias`, `unalias`, `exit`
-* `smoosh-fmt` to format a smoosh script to a standard
-* Padding out several fundamental language features missing from monkey (floats, …)
+* Basic features similar to 'monkey'
+* Repurpose monkey as a 'shell':
+  - [X] accept smoosh piped in from STDIN
+  - [ ] take in a filename(s) for processing as a script
+  - [ ] support/ignore a hashbang at the top of a file
+  - [ ] support for piping external commands …
+* Builtins:
+  - [ ] basic builtins such as `cd`, `alias`, `unalias`, `exit`
+* Tooling:
+  - [ ] `smoosh-fmt` to format a smoosh script in a standard format
+  - [X] Alternate REPL to print lexer results
+  - [X] Alternate REPL to print AST as json
+* [ ] `let` replaced with initialisation (`var` keyword) and plain reassignment.
+* Pad out some fundamental language features missing from monkey (floats, …)
+  - [ ] floats/doubles
 * A rich standard library (based on parts of Go's standard lib)
-* `$""` for running external commands. _NOTE: `$()` should be used for running commands inline, as in bash._
-* `|` for piping. _Hopefully, typed pipes for slices._
-* Unicode support.
-* _Maybe_ unicode equivalents for readability. You'd type ascii as above and then `-fmt` would reformat to some equivalent like this ... maybe too crazy, eh
+* Piping/execing primitives.
+  AFAICT these primitives can be implemented as 'shorthands' or syntactic sugar for `os.Exec`
+  - [ ] `$""` for running external commands. 
+  - [ ] `$()` should be used for running commands inline, as in bash.
+  - [ ] `|` for piping. _Hopefully, typed pipes for slices._
+* [ ] Unicode support.
+* [ ] _Maybe_ unicode equivalents for readability. You'd type ascii as above and then `-fmt` would reformat to some equivalent like this ... maybe too crazy, eh
 ```
    echo x 🡒 $"grep", "1" ⤸
           ⤷ >"out.log" ⤸

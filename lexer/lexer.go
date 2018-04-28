@@ -1,7 +1,14 @@
+/*
+Package lexer handles the interpreter's first phase of operation. Lexer takes some input and interpret it into 'tokens'.
+
+Smoosh (and Monkey) builds up its input into an ordered list of tokens without attmpting to make sense of the structure and relationship.
+These tokens are operators, keywords, identifiers or values (strings, numbers, etc).
+*/
 package lexer
 
 import "github.com/laher/smoosh/token"
 
+// Lexer tokenises input
 type Lexer struct {
 	input        string
 	position     int  // current position in input (points to current char)
@@ -9,12 +16,14 @@ type Lexer struct {
 	ch           byte // current char under examination
 }
 
+// New creates and initialises a new lexer
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
 	l.readChar()
 	return l
 }
 
+// NextToken attempts to find the next token in the program's input
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
@@ -106,15 +115,14 @@ func (l *Lexer) readChar() {
 		l.ch = l.input[l.readPosition]
 	}
 	l.position = l.readPosition
-	l.readPosition += 1
+	l.readPosition++
 }
 
 func (l *Lexer) peekChar() byte {
 	if l.readPosition >= len(l.input) {
 		return 0
-	} else {
-		return l.input[l.readPosition]
 	}
+	return l.input[l.readPosition]
 }
 
 func (l *Lexer) readIdentifier() string {

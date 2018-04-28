@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-var traceLevel int = 0
+var traceLevel int
 
 const traceIdentPlaceholder string = "\t"
 

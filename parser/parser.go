@@ -1,3 +1,6 @@
+/*
+Package parser attempts to organise tokens into an AST
+*/
 package parser
 
 import (
@@ -11,14 +14,22 @@ import (
 
 const (
 	_ int = iota
+	// LOWEST represents lowest precedence
 	LOWEST
-	EQUALS      // ==
-	LESSGREATER // > or <
-	SUM         // +
-	PRODUCT     // *
-	PREFIX      // -X or !X
-	CALL        // myFunction(X)
-	INDEX       // array[index]
+	// EQUALS : ==
+	EQUALS
+	// LESSGREATER : > or <
+	LESSGREATER
+	// SUM : +
+	SUM
+	// PRODUCT : *
+	PRODUCT
+	// PREFIX : -X or !X
+	PREFIX
+	// CALL :  myFunction(X)
+	CALL
+	// INDEX : array[index]
+	INDEX
 )
 
 var precedences = map[token.TokenType]int{
@@ -39,6 +50,7 @@ type (
 	infixParseFn  func(ast.Expression) ast.Expression
 )
 
+// Parser attempts to make sense of tokens
 type Parser struct {
 	l      *lexer.Lexer
 	errors []string
@@ -50,6 +62,7 @@ type Parser struct {
 	infixParseFns  map[token.TokenType]infixParseFn
 }
 
+// New creates, initialises and returns a new Parser
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{
 		l:      l,
@@ -107,12 +120,12 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()
 		return true
-	} else {
-		p.peekError(t)
-		return false
 	}
+	p.peekError(t)
+	return false
 }
 
+// Errors returns a list of parse errors
 func (p *Parser) Errors() []string {
 	return p.errors
 }
@@ -128,6 +141,7 @@ func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 	p.errors = append(p.errors, msg)
 }
 
+// ParseProgram parses an entire proram into an AST
 func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
