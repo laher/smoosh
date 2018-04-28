@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 
 	"github.com/laher/smoosh/evaluator"
 	"github.com/laher/smoosh/lexer"
@@ -14,28 +15,29 @@ import (
 	"github.com/laher/smoosh/token"
 )
 
-// RunAll runs an io.Reader as a single program
-func (r *Runner) RunAll(rdr io.Reader, out io.Writer) error {
+// RunFile runs a file as a single program
+func (r *Runner) RunFile(filename string, out io.Writer) error {
+	f, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return r.Run(f, out)
+}
+
+// Run runs an io.Reader as a single program
+func (r *Runner) Run(rdr io.Reader, out io.Writer) error {
+
 	data, err := ioutil.ReadAll(rdr)
 	if err != nil {
 		return fmt.Errorf("could not read: %v", err)
 	}
-
-	return r.runData(data, out)
+	env := object.NewEnvironment()
+	return r.runData(string(data), out, env)
 }
 
-// RunFile runs a file as a single program
-func (r *Runner) RunFile(filename string, out io.Writer) error {
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return fmt.Errorf("could not read %s: %v", filename, err)
-	}
-
-	return r.runData(data, out)
-}
-
-func (r *Runner) runData(data []byte, out io.Writer) error {
-	l := lexer.New(string(data))
+func (r *Runner) runData(data string, out io.Writer, env *object.Environment) error {
+	l := lexer.New(data)
 	if r.Parse {
 		p := parser.New(l)
 		program := p.ParseProgram()
@@ -43,9 +45,11 @@ func (r *Runner) runData(data []byte, out io.Writer) error {
 			return errors.New(p.Errors()[0])
 		}
 		if r.Evaluate {
-			env := object.NewEnvironment()
 			result := evaluator.Eval(program, env)
 			if _, ok := result.(*object.Null); ok {
+				return nil
+			}
+			if result == nil {
 				return nil
 			}
 			_, err := io.WriteString(out, result.Inspect()+"\n")

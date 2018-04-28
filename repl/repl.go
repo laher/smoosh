@@ -7,18 +7,13 @@ package repl
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"os/user"
 	"path"
 
-	"github.com/laher/smoosh/evaluator"
-	"github.com/laher/smoosh/lexer"
 	"github.com/laher/smoosh/object"
-	"github.com/laher/smoosh/parser"
-	"github.com/laher/smoosh/token"
 )
 
 // NewRunner initializes a Runner
@@ -64,37 +59,9 @@ func (r *Runner) Start(in io.Reader, out io.Writer) {
 		}
 
 		line := scanner.Text()
-		l := lexer.New(line)
-		if r.Parse {
-			p := parser.New(l)
-
-			program := p.ParseProgram()
-			if len(p.Errors()) != 0 {
-				printParserErrors(out, p.Errors())
-				continue
-			}
-			if r.Evaluate {
-				evaluated := evaluator.Eval(program, env)
-				if evaluated != nil {
-					io.WriteString(out, evaluated.Inspect())
-					io.WriteString(out, "\n")
-				}
-			} else {
-				if r.Format {
-					io.WriteString(out, program.String())
-					io.WriteString(out, "\n")
-					return
-				}
-				b, err := json.MarshalIndent(program, "", "  ")
-				if err != nil {
-					panic(err)
-				}
-				fmt.Fprintf(out, "%s\n", string(b))
-			}
-		} else {
-			for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
-				fmt.Fprintf(out, "%#v\n", tok)
-			}
+		err := r.runData(line, out, env)
+		if err != nil {
+			panic(err)
 		}
 	}
 }
