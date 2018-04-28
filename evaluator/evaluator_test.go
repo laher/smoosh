@@ -136,7 +136,7 @@ if (10 > 1) {
 		},
 		{
 			`
-let f = fn(x) {
+var f = fn(x) {
   return x;
   x + 10;
 };
@@ -145,8 +145,8 @@ f(10);`,
 		},
 		{
 			`
-let f = fn(x) {
-   let result = x + 10;
+var f = fn(x) {
+   var result = x + 10;
    return result;
    return 10;
 };
@@ -246,10 +246,10 @@ func TestLetStatements(t *testing.T) {
 		input    string
 		expected int64
 	}{
-		{"let a = 5; a;", 5},
-		{"let a = 5 * 5; a;", 25},
-		{"let a = 5; let b = a; b;", 5},
-		{"let a = 5; let b = a; let c = a + b + 5; c;", 15},
+		{"var a = 5; a;", 5},
+		{"var a = 5 * 5; a;", 25},
+		{"var a = 5; var b = a; b;", 5},
+		{"var a = 5; var b = a; var c = a + b + 5; c;", 15},
 	}
 
 	for _, tt := range tests {
@@ -287,11 +287,11 @@ func TestFunctionApplication(t *testing.T) {
 		input    string
 		expected int64
 	}{
-		{"let identity = fn(x) { x; }; identity(5);", 5},
-		{"let identity = fn(x) { return x; }; identity(5);", 5},
-		{"let double = fn(x) { x * 2; }; double(5);", 10},
-		{"let add = fn(x, y) { x + y; }; add(5, 5);", 10},
-		{"let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20},
+		{"var identity = fn(x) { x; }; identity(5);", 5},
+		{"var identity = fn(x) { return x; }; identity(5);", 5},
+		{"var double = fn(x) { x * 2; }; double(5);", 10},
+		{"var add = fn(x, y) { x + y; }; add(5, 5);", 10},
+		{"var add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20},
 		{"fn(x) { x; }(5)", 5},
 	}
 
@@ -302,12 +302,12 @@ func TestFunctionApplication(t *testing.T) {
 
 func TestEnclosingEnvironments(t *testing.T) {
 	input := `
-let first = 10;
-let second = 10;
-let third = 10;
+var first = 10;
+var second = 10;
+var third = 10;
 
-let ourFunction = fn(first) {
-  let second = 20;
+var ourFunction = fn(first) {
+  var second = 20;
 
   first + second + third;
 };
@@ -319,11 +319,11 @@ ourFunction(20) + first + second;`
 
 func TestClosures(t *testing.T) {
 	input := `
-let newAdder = fn(x) {
+var newAdder = fn(x) {
   fn(y) { x + y };
 };
 
-let addTwo = newAdder(2);
+var addTwo = newAdder(2);
 addTwo(2);`
 
 	testIntegerObject(t, testEval(input), 4)
@@ -458,7 +458,7 @@ func TestArrayIndexExpressions(t *testing.T) {
 			3,
 		},
 		{
-			"let i = 0; [1][i];",
+			"var i = 0; [1][i];",
 			1,
 		},
 		{
@@ -466,15 +466,15 @@ func TestArrayIndexExpressions(t *testing.T) {
 			3,
 		},
 		{
-			"let myArray = [1, 2, 3]; myArray[2];",
+			"var myArray = [1, 2, 3]; myArray[2];",
 			3,
 		},
 		{
-			"let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
+			"var myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
 			6,
 		},
 		{
-			"let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]",
+			"var myArray = [1, 2, 3]; var i = myArray[0]; myArray[i]",
 			2,
 		},
 		{
@@ -499,7 +499,7 @@ func TestArrayIndexExpressions(t *testing.T) {
 }
 
 func TestHashLiterals(t *testing.T) {
-	input := `let two = "two";
+	input := `var two = "two";
 	{
 		"one": 10 - 9,
 		two: 1 + 1,
@@ -552,7 +552,7 @@ func TestHashIndexExpressions(t *testing.T) {
 			nil,
 		},
 		{
-			`let key = "foo"; {"foo": 5}[key]`,
+			`var key = "foo"; {"foo": 5}[key]`,
 			5,
 		},
 		{

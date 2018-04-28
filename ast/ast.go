@@ -49,7 +49,7 @@ func (p *Program) String() string {
 
 // Statements
 type LetStatement struct {
-	Token token.Token // the token.LET token
+	Token token.Token // the token.VAR token
 	Name  *Identifier
 	Value Expression
 }
