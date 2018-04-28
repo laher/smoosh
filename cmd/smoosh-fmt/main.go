@@ -12,6 +12,9 @@ func main() {
 	flag.Parse()
 
 	runner := repl.NewRunner()
+	runner.Evaluate = false
+	runner.Format = true
+
 	if len(flag.Args()) == 0 {
 		runner.Start(os.Stdin, os.Stdout)
 		return

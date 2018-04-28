@@ -67,7 +67,7 @@ func (ls *LetStatement) String() string {
 		out.WriteString(ls.Value.String())
 	}
 
-	out.WriteString(";")
+	out.WriteString("\n")
 
 	return out.String()
 }
@@ -88,7 +88,7 @@ func (rs *ReturnStatement) String() string {
 		out.WriteString(rs.ReturnValue.String())
 	}
 
-	out.WriteString(";")
+	out.WriteString("\n")
 
 	return out.String()
 }
@@ -121,6 +121,7 @@ func (bs *BlockStatement) String() string {
 		out.WriteString(s.String())
 	}
 
+	out.WriteString("\n")
 	return out.String()
 }
 
@@ -206,12 +207,14 @@ func (ie *IfExpression) String() string {
 
 	out.WriteString("if")
 	out.WriteString(ie.Condition.String())
-	out.WriteString(" ")
+	out.WriteString(" {\n")
 	out.WriteString(ie.Consequence.String())
+	out.WriteString("}\n")
 
 	if ie.Alternative != nil {
-		out.WriteString("else ")
+		out.WriteString("} else {\n")
 		out.WriteString(ie.Alternative.String())
+		out.WriteString("\n}\n")
 	}
 
 	return out.String()
@@ -238,7 +241,7 @@ func (fl *FunctionLiteral) String() string {
 	out.WriteString(strings.Join(params, ", "))
 	out.WriteString(") ")
 	out.WriteString(fl.Body.String())
-
+	out.WriteString("\n")
 	return out.String()
 }
 
@@ -263,6 +266,7 @@ func (ce *CallExpression) String() string {
 	out.WriteString(strings.Join(args, ", "))
 	out.WriteString(")")
 
+	out.WriteString("\n")
 	return out.String()
 }
 

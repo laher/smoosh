@@ -21,19 +21,16 @@ import (
 	"github.com/laher/smoosh/token"
 )
 
-// Start the repl
-func Start(in io.Reader, out io.Writer) {
-	start(in, out, true, true)
+// NewRunner initializes a Runner
+func NewRunner() *Runner {
+	return &Runner{true, true, false}
 }
 
-// Tokenize only
-func Tokenize(in io.Reader, out io.Writer) {
-	start(in, out, false, false)
-}
-
-// Tokenize+Parse only
-func Parse(in io.Reader, out io.Writer) {
-	start(in, out, true, false)
+// Runner can run a repl or a program
+type Runner struct {
+	Parse    bool
+	Evaluate bool
+	Format   bool
 }
 
 func isPipedInput() bool {
@@ -44,7 +41,8 @@ func isPipedInput() bool {
 	return false
 }
 
-func start(in io.Reader, out io.Writer, parse, evaluate bool) {
+// Start starts a line-by-line processor
+func (r *Runner) Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
 	env := object.NewEnvironment()
 	user, err := user.Current()
@@ -67,7 +65,7 @@ func start(in io.Reader, out io.Writer, parse, evaluate bool) {
 
 		line := scanner.Text()
 		l := lexer.New(line)
-		if parse {
+		if r.Parse {
 			p := parser.New(l)
 
 			program := p.ParseProgram()
@@ -75,13 +73,18 @@ func start(in io.Reader, out io.Writer, parse, evaluate bool) {
 				printParserErrors(out, p.Errors())
 				continue
 			}
-			if evaluate {
+			if r.Evaluate {
 				evaluated := evaluator.Eval(program, env)
 				if evaluated != nil {
 					io.WriteString(out, evaluated.Inspect())
 					io.WriteString(out, "\n")
 				}
 			} else {
+				if r.Format {
+					io.WriteString(out, program.String())
+					io.WriteString(out, "\n")
+					return
+				}
 				b, err := json.MarshalIndent(program, "", "  ")
 				if err != nil {
 					panic(err)
@@ -90,7 +93,7 @@ func start(in io.Reader, out io.Writer, parse, evaluate bool) {
 			}
 		} else {
 			for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
-				fmt.Fprintf(out, "%+v\n", tok)
+				fmt.Fprintf(out, "%#v\n", tok)
 			}
 		}
 	}
