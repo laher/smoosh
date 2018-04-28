@@ -48,15 +48,15 @@ func (p *Program) String() string {
 }
 
 // Statements
-type LetStatement struct {
+type AssignStatement struct {
 	Token token.Token // the token.VAR token
 	Name  *Identifier
 	Value Expression
 }
 
-func (ls *LetStatement) statementNode()       {}
-func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal }
-func (ls *LetStatement) String() string {
+func (ls *AssignStatement) statementNode()       {}
+func (ls *AssignStatement) TokenLiteral() string { return ls.Token.Literal }
+func (ls *AssignStatement) String() string {
 	var out bytes.Buffer
 
 	out.WriteString(ls.TokenLiteral() + " ")

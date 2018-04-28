@@ -8,7 +8,7 @@ import (
 	"github.com/laher/smoosh/lexer"
 )
 
-func TestLetStatements(t *testing.T) {
+func TestVarStatements(t *testing.T) {
 	tests := []struct {
 		input              string
 		expectedIdentifier string
@@ -31,11 +31,11 @@ func TestLetStatements(t *testing.T) {
 		}
 
 		stmt := program.Statements[0]
-		if !testLetStatement(t, stmt, tt.expectedIdentifier) {
+		if !testVarStatement(t, stmt, tt.expectedIdentifier) {
 			return
 		}
 
-		val := stmt.(*ast.LetStatement).Value
+		val := stmt.(*ast.AssignStatement).Value
 		if !testLiteralExpression(t, val, tt.expectedValue) {
 			return
 		}
@@ -937,13 +937,8 @@ func TestParsingHashLiteralsWithExpressions(t *testing.T) {
 	}
 }
 
-func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
-	if s.TokenLiteral() != "var" {
-		t.Errorf("s.TokenLiteral not 'var'. got=%q", s.TokenLiteral())
-		return false
-	}
-
-	varStmt, ok := s.(*ast.LetStatement)
+func testVarStatement(t *testing.T, s ast.Statement, name string) bool {
+	varStmt, ok := s.(*ast.AssignStatement)
 	if !ok {
 		t.Errorf("s not *ast.LetStatement. got=%T", s)
 		return false

@@ -160,22 +160,36 @@ func (p *Parser) ParseProgram() *ast.Program {
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
 	case token.VAR:
-		return p.parseLetStatement()
+		return p.parseVarStatement()
 	case token.RETURN:
 		return p.parseReturnStatement()
 	default:
+		if p.peekTokenIs(token.ASSIGN) {
+			//implicit var statement
+			return p.parseReassignStatement()
+		}
 		return p.parseExpressionStatement()
 	}
 }
 
-func (p *Parser) parseLetStatement() *ast.LetStatement {
-	stmt := &ast.LetStatement{Token: p.curToken}
-
+func (p *Parser) parseVarStatement() *ast.AssignStatement {
 	if !p.expectPeek(token.IDENT) {
 		return nil
 	}
+	stmt := &ast.AssignStatement{Token: p.curToken}
+	return p.parseAssignStament(stmt)
+}
 
-	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+func (p *Parser) parseReassignStatement() *ast.AssignStatement {
+	stmt := &ast.AssignStatement{Token: token.Token{Type: token.VAR}}
+	return p.parseAssignStament(stmt)
+}
+
+func (p *Parser) parseAssignStament(stmt *ast.AssignStatement) *ast.AssignStatement {
+	stmt.Name = &ast.Identifier{
+		Token: p.curToken,
+		Value: p.curToken.Literal,
+	}
 
 	if !p.expectPeek(token.ASSIGN) {
 		return nil
@@ -185,13 +199,12 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 
 	stmt.Value = p.parseExpression(LOWEST)
 
-	if p.peekTokenIs(token.SEMICOLON) {
+	for p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
 
 	return stmt
 }
-
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	stmt := &ast.ReturnStatement{Token: p.curToken}
 

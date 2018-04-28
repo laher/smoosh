@@ -33,7 +33,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		return &object.ReturnValue{Value: val}
 
-	case *ast.LetStatement:
+	case *ast.AssignStatement:
 		val := Eval(node.Value, env)
 		if isError(val) {
 			return val
