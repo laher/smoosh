@@ -186,27 +186,38 @@ var builtins = map[string]*object.Builtin{
 					len(args))
 			}
 			inputs := []string{}
-			for _, arg := range args {
+			for i, arg := range args {
 				if arg.Type() != object.STRING_OBJ {
-					return newError("argument to `cd` must be STRING, got %s",
-						args[0].Type())
+					return newError("argument to `$` must be STRING, got %s",
+						args[i].Type())
 				}
-				switch arg := args[0].(type) {
+				switch argT := arg.(type) {
 				case *object.String:
-					inputs = append(inputs, arg.Value)
+					inputs = append(inputs, argT.Value)
 				default:
-					return newError("argument to `cd` not supported, got %s",
-						args[0].Type())
+					return newError("argument to `$` not supported, got %s",
+						argT.Type())
 				}
 
 			}
-
 			cmd := exec.Command(inputs[0], inputs[1:]...)
-			stdoutStderr, err := cmd.CombinedOutput()
+
+			out, err := cmd.StdoutPipe()
 			if err != nil {
 				return newError(err.Error())
 			}
-			return &object.String{Value: string(stdoutStderr)} // TODO new type 'pipe' with stdout/stderr as reader/writer
+			errOut, err := cmd.StderrPipe()
+			if err != nil {
+				return newError(err.Error())
+			}
+
+			err = cmd.Start()
+			//stdoutStderr, err := cmd.CombinedOutput()
+			if err != nil {
+				return newError(err.Error())
+			}
+			return &object.Pipes{Out: out, Err: errOut, Wait: cmd.Wait}
+			//return &object.String{Value: string(stdoutStderr)} // TODO new type 'pipe' with stdout/stderr as reader/writer
 		},
 	},
 }

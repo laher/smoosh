@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"hash/fnv"
+	"io"
 	"strings"
 
 	"github.com/laher/smoosh/ast"
@@ -28,6 +29,8 @@ const (
 
 	ARRAY_OBJ = "ARRAY"
 	HASH_OBJ  = "HASH"
+
+	PIPES_OBJ = "PIPES"
 )
 
 type HashKey struct {
@@ -180,4 +183,16 @@ func (h *Hash) Inspect() string {
 	out.WriteString("}")
 
 	return out.String()
+}
+
+type Pipes struct {
+	Out  io.Reader
+	Err  io.Reader
+	Wait func() error
+}
+
+func (h *Pipes) Type() ObjectType { return PIPES_OBJ }
+
+func (h *Pipes) Inspect() string {
+	return "|"
 }

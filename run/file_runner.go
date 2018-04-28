@@ -52,6 +52,18 @@ func (r *Runner) runData(data string, out io.Writer, env *object.Environment) er
 			if result == nil {
 				return nil
 			}
+			if pipes, ok := result.(*object.Pipes); ok {
+				cmdOut, err := ioutil.ReadAll(pipes.Out)
+				if err != nil {
+					return err
+				}
+				err = pipes.Wait()
+				if err != nil {
+					return err
+				}
+				_, err = fmt.Fprintf(out, "%s", cmdOut)
+				return err
+			}
 			_, err := io.WriteString(out, result.Inspect()+"\n")
 			return err
 		}

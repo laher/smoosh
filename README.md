@@ -22,17 +22,18 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
 * Basic features similar to 'monkey'
 * Repurpose monkey as a 'shell':
   - [X] accept smoosh piped in from STDIN
-  - [ ] take in a filename(s) for processing as a script
+  - [X] take in a filename(s) for processing as a script
   - [ ] support/ignore a hashbang at the top of a file
   - [ ] support for piping external commands …
 * Builtins:
-  - [ ] basic builtins such as `cd`, `alias`, `unalias`, `exit`
+  - [X] basic builtins such as `cd`, `exit`, `pwd`, `len`
+  - [ ] `alias`, `unalias`
 * Tooling:
-  - [ ] `smoosh-fmt` to format a smoosh script in a standard format
+  - [X] `smoosh-fmt` to format a smoosh script in a standard format
   - [X] Alternate REPL to print lexer results
   - [X] Alternate REPL to print AST as json
 * Static types
-  - [ ] `let` replaced with initialisation (`var` keyword) and plain old reassignment
+  - [X] `let` replaced with initialisation (`var` keyword) and plain old reassignment
   - [ ] type checking
 * Pad out some fundamental language features missing from monkey (floats, …)
   - [ ] floats/doubles
