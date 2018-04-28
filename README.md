@@ -46,7 +46,7 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
   - [ ] templating inside standard strings
   - [ ] multiline strings (syntax??)
 * Unicode support.
-  - [ ] Parse smoosh in runes instead of bytes
+  - [X] Parse smoosh in runes instead of bytes
   - [ ] _Maybe_ unicode equivalents for readability. You'd type ascii as above and then `-fmt` would reformat to some equivalent like this ... maybe too crazy, eh
 ```
    echo x 🡒 $"grep", "1" ⤸
