@@ -79,6 +79,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.FALSE, p.parseBoolean)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.IF, p.parseIfExpression)
+	p.registerPrefix(token.PIPE, p.parsePipeExpression)
 	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
 	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
 	p.registerPrefix(token.LBRACE, p.parseHashLiteral)
@@ -366,6 +367,17 @@ func (p *Parser) parseIfExpression() ast.Expression {
 	}
 
 	return expression
+}
+
+func (p *Parser) parsePipeExpression() ast.Expression {
+	expression := &ast.PipeExpression{Token: p.curToken}
+	p.nextToken()
+	destination := p.parseExpression(LOWEST)
+	if d, ok := destination.(*ast.CallExpression); ok {
+		expression.Destination = d
+		return expression
+	}
+	return nil
 }
 
 func (p *Parser) parseBlockStatement() *ast.BlockStatement {

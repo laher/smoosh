@@ -85,6 +85,8 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.LBRACKET, l.ru)
 	case ']':
 		tok = newToken(token.RBRACKET, l.ru)
+	case '|':
+		tok = newToken(token.PIPE, l.ru)
 	case 0, utf8.RuneError:
 		tok.Literal = ""
 		tok.Type = token.EOF
@@ -155,7 +157,7 @@ func (l *Lexer) read(checkFn func(rune) bool) string {
 }
 
 func isLetter(ch rune) bool {
-	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' || ch == '$' || ch == '|'
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' || ch == '$'
 }
 
 func isDigit(ch rune) bool {

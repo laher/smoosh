@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"hash/fnv"
-	"io"
 	"strings"
 
 	"github.com/laher/smoosh/ast"
 )
 
-type BuiltinFunction func(args ...Object) Object
+type BuiltinFunction func(in, out *ast.Pipes, args ...Object) Object
 
 type ObjectType string
 
@@ -185,12 +184,15 @@ func (h *Hash) Inspect() string {
 	return out.String()
 }
 
+/*
 // Pipes are the outcome of an exec'd command
 type Pipes struct {
-	Out  io.Reader
-	Err  io.Reader
+	Out  io.ReadCloser
+	Err  io.ReadCloser
 	Wait func() error
 }
+*/
+type Pipes ast.Pipes
 
 func (h *Pipes) Type() ObjectType { return PIPES_OBJ }
 

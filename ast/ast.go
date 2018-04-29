@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"io"
 	"strings"
 
 	"github.com/laher/smoosh/token"
@@ -91,6 +92,13 @@ func (rs *ReturnStatement) String() string {
 	out.WriteString("\n")
 
 	return out.String()
+}
+
+// Pipes are the outcome of an exec'd command
+type Pipes struct {
+	Out  io.ReadCloser
+	Err  io.ReadCloser
+	Wait func() error
 }
 
 type ExpressionStatement struct {
@@ -220,6 +228,22 @@ func (ie *IfExpression) String() string {
 	return out.String()
 }
 
+type PipeExpression struct {
+	Token       token.Token // The '|' token
+	Destination *CallExpression
+}
+
+func (pe *PipeExpression) expressionNode()      {}
+func (pe *PipeExpression) TokenLiteral() string { return pe.Token.Literal }
+func (pe *PipeExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("|")
+	out.WriteString(pe.Destination.String())
+
+	return out.String()
+}
+
 type FunctionLiteral struct {
 	Token      token.Token // The 'fn' token
 	Parameters []*Identifier
@@ -249,6 +273,8 @@ type CallExpression struct {
 	Token     token.Token // The '(' token
 	Function  Expression  // Identifier or FunctionLiteral
 	Arguments []Expression
+	Out       *Pipes
+	In        *Pipes
 }
 
 func (ce *CallExpression) expressionNode()      {}

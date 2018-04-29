@@ -5,11 +5,12 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
 var builtins = map[string]*object.Builtin{
-	"len": &object.Builtin{Fn: func(args ...object.Object) object.Object {
+	"len": &object.Builtin{Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
 		if len(args) != 1 {
 			return newError("wrong number of arguments. got=%d, want=1",
 				len(args))
@@ -27,7 +28,7 @@ var builtins = map[string]*object.Builtin{
 	},
 	},
 	"puts": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
 			for _, arg := range args {
 				fmt.Println(arg.Inspect())
 			}
@@ -36,7 +37,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"first": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
@@ -55,7 +56,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"last": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
@@ -75,7 +76,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"rest": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
@@ -97,7 +98,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"push": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) != 2 {
 				return newError("wrong number of arguments. got=%d, want=2",
 					len(args))
@@ -118,7 +119,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"pwd": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) != 0 {
 				return newError("wrong number of arguments. got=%d, want=0",
 					len(args))
@@ -132,7 +133,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"cd": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
@@ -156,7 +157,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"exit": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) > 1 {
 				return newError("wrong number of arguments. got=%d, want=0/1",
 					len(args))
@@ -180,7 +181,7 @@ var builtins = map[string]*object.Builtin{
 	},
 
 	"$": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) < 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
@@ -201,78 +202,36 @@ var builtins = map[string]*object.Builtin{
 
 			}
 			cmd := exec.Command(inputs[0], inputs[1:]...)
-
-			out, err := cmd.StdoutPipe()
-			if err != nil {
-				return newError(err.Error())
+			if in != nil {
+				cmd.Stdin = in.Out
 			}
-			errOut, err := cmd.StderrPipe()
-			if err != nil {
-				return newError(err.Error())
-			}
-
-			err = cmd.Start()
-			//stdoutStderr, err := cmd.CombinedOutput()
-			if err != nil {
-				return newError(err.Error())
-			}
-			return &object.Pipes{Out: out, Err: errOut, Wait: cmd.Wait}
-			//return &object.String{Value: string(stdoutStderr)} // TODO new type 'pipe' with stdout/stderr as reader/writer
-		},
-	},
-	"|": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
-			if len(args) < 2 {
-				return newError("wrong number of arguments. got=%d, want=1",
-					len(args))
-			}
-			arg := args[0]
-			if arg.Type() != object.PIPES_OBJ {
-				return newError("argument to `|` must be PIPES_OBJ, got %s",
-					arg.Type())
-			}
-			var pipes *object.Pipes
-			switch argT := arg.(type) {
-			case *object.Pipes:
-				pipes = argT
-			default:
-				return newError("argument to `|` not supported, got %s",
-					argT.Type())
-			}
-			inputs := []string{}
-			for i, arg := range args[1:] {
-				if arg.Type() != object.STRING_OBJ {
-					return newError("argument to `|` must be STRING, got %s",
-						args[i].Type())
+			if out != nil {
+				stdOut, err := cmd.StdoutPipe()
+				if err != nil {
+					return newError(err.Error())
 				}
-				switch argT := arg.(type) {
-				case *object.String:
-					inputs = append(inputs, argT.Value)
-				default:
-					return newError("argument to `|` not supported, got %s",
-						argT.Type())
+				errOut, err := cmd.StderrPipe()
+				if err != nil {
+					return newError(err.Error())
 				}
-
+				out.Out = stdOut
+				out.Err = errOut
+				out.Wait = cmd.Wait
+				err = cmd.Start()
+				if err != nil {
+					return newError(err.Error())
+				}
+				p := object.Pipes(*out)
+				return &p
 			}
-			cmd := exec.Command(inputs[0], inputs[1:]...)
-			cmd.Stdin = pipes.Out
-
-			out, err := cmd.StdoutPipe()
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			err := cmd.Run()
 			if err != nil {
 				return newError(err.Error())
 			}
-			errOut, err := cmd.StderrPipe()
-			if err != nil {
-				return newError(err.Error())
-			}
-
-			err = cmd.Start()
-			//stdoutStderr, err := cmd.CombinedOutput()
-			if err != nil {
-				return newError(err.Error())
-			}
-			return &object.Pipes{Out: out, Err: errOut, Wait: cmd.Wait}
-			//return &object.String{Value: string(stdoutStderr)} // TODO new type 'pipe' with stdout/stderr as reader/writer
+			return NULL
+			//return &object.String{Value: string(stdoutStderr)} // TODO return as a string?
 		},
 	},
 }

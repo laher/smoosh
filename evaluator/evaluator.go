@@ -14,6 +14,7 @@ var (
 )
 
 func Eval(node ast.Node, env *object.Environment) object.Object {
+
 	switch node := node.(type) {
 
 	// Statements
@@ -92,7 +93,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return args[0]
 		}
 
-		return applyFunction(function, args)
+		return applyFunction(function, args, node.In, node.Out)
 
 	case *ast.ArrayLiteral:
 		elements := evalExpressions(node.Elements, env)
@@ -115,6 +116,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.HashLiteral:
 		return evalHashLiteral(node, env)
 
+	case *ast.PipeExpression:
+		return Eval(node.Destination, env)
 	}
 
 	return nil
@@ -123,6 +126,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 func evalProgram(program *ast.Program, env *object.Environment) object.Object {
 	var result object.Object
 
+	checkPipes(program.Statements)
 	for _, statement := range program.Statements {
 		result = Eval(statement, env)
 
@@ -143,6 +147,7 @@ func evalBlockStatement(
 ) object.Object {
 	var result object.Object
 
+	checkPipes(block.Statements)
 	for _, statement := range block.Statements {
 		result = Eval(statement, env)
 
@@ -155,6 +160,27 @@ func evalBlockStatement(
 	}
 
 	return result
+}
+
+func checkPipes(statements []ast.Statement) {
+	for i, this := range statements {
+		if i > 0 {
+			prev := statements[i-1]
+			if expS, ok := this.(*ast.ExpressionStatement); ok {
+				if p, ok := expS.Expression.(*ast.PipeExpression); ok {
+					//this is a pipe ... hook up the outs and ins
+					pipes := &ast.Pipes{}
+					if expS, ok := prev.(*ast.ExpressionStatement); ok {
+						if callS, ok := expS.Expression.(*ast.CallExpression); ok {
+							callS.Out = pipes
+						}
+					}
+					p.Destination.In = pipes
+				}
+			}
+		}
+	}
+
 }
 
 func nativeBoolToBooleanObject(input bool) *object.Boolean {
@@ -337,7 +363,7 @@ func evalExpressions(
 	return result
 }
 
-func applyFunction(fn object.Object, args []object.Object) object.Object {
+func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes) object.Object {
 	switch fn := fn.(type) {
 
 	case *object.Function:
@@ -346,7 +372,7 @@ func applyFunction(fn object.Object, args []object.Object) object.Object {
 		return unwrapReturnValue(evaluated)
 
 	case *object.Builtin:
-		return fn.Fn(args...)
+		return fn.Fn(in, out, args...)
 
 	default:
 		return newError("not a function: %s", fn.Type())

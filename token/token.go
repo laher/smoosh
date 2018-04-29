@@ -45,6 +45,9 @@ const (
 	IF       = "IF"
 	ELSE     = "ELSE"
 	RETURN   = "RETURN"
+
+	// Execution
+	PIPE = "|"
 )
 
 type Token struct {
