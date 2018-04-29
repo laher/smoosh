@@ -185,6 +185,7 @@ func (h *Hash) Inspect() string {
 	return out.String()
 }
 
+// Pipes are the outcome of an exec'd command
 type Pipes struct {
 	Out  io.Reader
 	Err  io.Reader

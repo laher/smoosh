@@ -220,4 +220,59 @@ var builtins = map[string]*object.Builtin{
 			//return &object.String{Value: string(stdoutStderr)} // TODO new type 'pipe' with stdout/stderr as reader/writer
 		},
 	},
+	"|": &object.Builtin{
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) < 2 {
+				return newError("wrong number of arguments. got=%d, want=1",
+					len(args))
+			}
+			arg := args[0]
+			if arg.Type() != object.PIPES_OBJ {
+				return newError("argument to `|` must be PIPES_OBJ, got %s",
+					arg.Type())
+			}
+			var pipes *object.Pipes
+			switch argT := arg.(type) {
+			case *object.Pipes:
+				pipes = argT
+			default:
+				return newError("argument to `|` not supported, got %s",
+					argT.Type())
+			}
+			inputs := []string{}
+			for i, arg := range args[1:] {
+				if arg.Type() != object.STRING_OBJ {
+					return newError("argument to `|` must be STRING, got %s",
+						args[i].Type())
+				}
+				switch argT := arg.(type) {
+				case *object.String:
+					inputs = append(inputs, argT.Value)
+				default:
+					return newError("argument to `|` not supported, got %s",
+						argT.Type())
+				}
+
+			}
+			cmd := exec.Command(inputs[0], inputs[1:]...)
+			cmd.Stdin = pipes.Out
+
+			out, err := cmd.StdoutPipe()
+			if err != nil {
+				return newError(err.Error())
+			}
+			errOut, err := cmd.StderrPipe()
+			if err != nil {
+				return newError(err.Error())
+			}
+
+			err = cmd.Start()
+			//stdoutStderr, err := cmd.CombinedOutput()
+			if err != nil {
+				return newError(err.Error())
+			}
+			return &object.Pipes{Out: out, Err: errOut, Wait: cmd.Wait}
+			//return &object.String{Value: string(stdoutStderr)} // TODO new type 'pipe' with stdout/stderr as reader/writer
+		},
+	},
 }
