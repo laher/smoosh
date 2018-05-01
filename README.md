@@ -32,11 +32,15 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
   - [X] `smoosh-fmt` to format a smoosh script in a standard format
   - [X] Alternate REPL to print lexer results
   - [X] Alternate REPL to print AST as json
+  - [ ] Line numbers (_a challenge for the reader_)
 * Static types
   - [X] `let` replaced with initialisation (`var` keyword) and plain old reassignment
   - [ ] type checking
 * Pad out some fundamental language features missing from monkey (floats, …)
   - [ ] floats/doubles
+  - [ ] bitwise operators/logic?
+  - [ ] bytes, reader, writer. Rune?
+  - [ ] streams?
 * A rich standard library (based on parts of Go's standard lib)
 * Piping/execing primitives.
   AFAICT these primitives can be implemented as 'shorthands' or syntactic sugar for `os.Exec`
@@ -47,7 +51,7 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
   - [ ] templating inside standard strings
   - [ ] multiline strings (syntax??)
 * Unicode support.
-  - [X] Parse smoosh in runes instead of bytes
+  - [X] Parse smoosh in runes instead of bytes (_a challenge for the reader_)
   - [ ] _Maybe_ unicode equivalents for readability. You'd type ascii as above and then `-fmt` would reformat to some equivalent like this ... maybe too crazy, eh
 ```
    echo x 🡒 $"grep", "1" ⤸

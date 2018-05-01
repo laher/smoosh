@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 
@@ -231,7 +232,53 @@ var builtins = map[string]*object.Builtin{
 				return newError(err.Error())
 			}
 			return NULL
-			//return &object.String{Value: string(stdoutStderr)} // TODO return as a string?
+		},
+	},
+	"w": &object.Builtin{
+		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
+			if len(args) < 1 || len(args) > 2 {
+				return newError("wrong number of arguments. got=%d, want=1 or 2",
+					len(args))
+			}
+			inputs := []string{}
+			for i, arg := range args {
+				if arg.Type() != object.STRING_OBJ {
+					return newError("argument to `$` must be STRING, got %s",
+						args[i].Type())
+				}
+				switch argT := arg.(type) {
+				case *object.String:
+					inputs = append(inputs, argT.Value)
+				default:
+					return newError("argument to `$` not supported, got %s",
+						argT.Type())
+				}
+
+			}
+			if in == nil {
+				return NULL
+			}
+
+			if inputs[0] != "" {
+				f, err := os.Create(inputs[0])
+				if err != nil {
+					return newError(err.Error())
+				}
+				if _, err := io.Copy(f, in.Out); err != nil {
+					return newError(err.Error())
+				}
+			}
+			if len(inputs) > 1 && inputs[1] != "" {
+				f, err := os.Create(inputs[1])
+				if err != nil {
+					return newError(err.Error())
+				}
+				if _, err := io.Copy(f, in.Err); err != nil {
+					return newError(err.Error())
+				}
+			}
+
+			return NULL
 		},
 	},
 }
