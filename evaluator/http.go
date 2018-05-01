@@ -1,6 +1,8 @@
 package evaluator
 
 import (
+	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -29,6 +31,13 @@ var httpPkg = map[string]*object.Builtin{
 				}
 				if out != nil {
 					out.Out = resp.Body
+					errStr := resp.Status + "\n\n"
+					for k, v := range resp.Header {
+						for _, h := range v {
+							errStr += fmt.Sprintf("%s: %s\n", k, h)
+						}
+					}
+					out.Err = ioutil.NopCloser(bytes.NewBufferString(errStr))
 					p := object.Pipes(*out)
 					return &p
 				}

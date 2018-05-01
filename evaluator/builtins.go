@@ -268,7 +268,7 @@ var builtins = map[string]*object.Builtin{
 					return newError(err.Error())
 				}
 			}
-			if len(inputs) > 1 && inputs[1] != "" {
+			if len(inputs) > 1 && inputs[1] != "" && in.Err != nil {
 				f, err := os.Create(inputs[1])
 				if err != nil {
 					return newError(err.Error())
