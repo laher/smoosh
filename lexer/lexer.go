@@ -157,7 +157,7 @@ func (l *Lexer) read(checkFn func(rune) bool) string {
 }
 
 func isLetter(ch rune) bool {
-	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' || ch == '$'
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' || ch == '$' || ch == '.'
 }
 
 func isDigit(ch rune) bool {
