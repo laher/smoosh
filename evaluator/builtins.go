@@ -13,22 +13,23 @@ import (
 )
 
 var builtins = map[string]*object.Builtin{
-	"len": &object.Builtin{Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
-		if len(args) != 1 {
-			return newError("wrong number of arguments. got=%d, want=1",
-				len(args))
-		}
+	"len": &object.Builtin{
+		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return newError("wrong number of arguments. got=%d, want=1",
+					len(args))
+			}
 
-		switch arg := args[0].(type) {
-		case *object.Array:
-			return &object.Integer{Value: int64(len(arg.Elements))}
-		case *object.String:
-			return &object.Integer{Value: int64(len(arg.Value))}
-		default:
-			return newError("argument to `len` not supported, got %s",
-				args[0].Type())
-		}
-	},
+			switch arg := args[0].(type) {
+			case *object.Array:
+				return &object.Integer{Value: int64(len(arg.Elements))}
+			case *object.String:
+				return &object.Integer{Value: int64(len(arg.Value))}
+			default:
+				return newError("argument to `len` not supported, got %s",
+					args[0].Type())
+			}
+		},
 	},
 	"puts": &object.Builtin{
 		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
@@ -147,7 +148,11 @@ var builtins = map[string]*object.Builtin{
 			}
 			switch arg := args[0].(type) {
 			case *object.String:
-				err := os.Chdir(arg.Value)
+				d, err := interpolate(env.Export(), arg.Value)
+				if err != nil {
+					return newError(err.Error())
+				}
+				err = os.Chdir(d)
 				if err != nil {
 					return newError(err.Error())
 				}
@@ -295,6 +300,54 @@ var builtins = map[string]*object.Builtin{
 			return NULL
 		},
 	},
+	"r": &object.Builtin{
+		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+			if len(args) < 1 || len(args) > 2 {
+				return newError("wrong number of arguments. got=%d, want=1 or 2",
+					len(args))
+			}
+			inputs, err := interpolateArgsAsStrings(env, args)
+			if err != nil {
+				return newError(err.Error())
+			}
+			f, err := os.Open(inputs[0])
+			if err != nil {
+				return newError(err.Error())
+			}
+			if out != nil {
+				out.Out = f
+				return NULL
+			}
+			if _, err := io.Copy(os.Stdout, f); err != nil {
+				return newError(err.Error())
+			}
+			return NULL
+		},
+	},
+}
+
+func interpolateArgsAsStrings(env *object.Environment, args []object.Object) ([]string, error) {
+	inputs := []string{}
+	envV := env.Export()
+	for i, arg := range args {
+		if arg.Type() != object.STRING_OBJ {
+			return nil, fmt.Errorf("argument must be STRING, got %s",
+				args[i].Type())
+		}
+		switch argT := arg.(type) {
+		case *object.String:
+			input, err := interpolate(envV, argT.Value)
+			if err != nil {
+				return nil, fmt.Errorf("cannot parse arg for interpolation - %s",
+					err)
+			}
+			inputs = append(inputs, input)
+		default:
+			return nil, fmt.Errorf("argument not supported, got %s",
+				argT.Type())
+		}
+	}
+	return inputs, nil
 }
 
 func interpolate(envV map[string]interface{}, value string) (string, error) {
