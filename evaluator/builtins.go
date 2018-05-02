@@ -198,18 +198,12 @@ var builtins = map[string]*object.Builtin{
 				}
 				switch argT := arg.(type) {
 				case *object.String:
-					tmpl, err := template.New("test").Parse(argT.Value)
+					input, err := interpolate(envV, argT.Value)
 					if err != nil {
 						return newError("cannot parse arg for interpolation - %s",
 							err)
 					}
-					buf := bytes.NewBuffer([]byte{})
-					err = tmpl.Execute(buf, envV)
-					if err != nil {
-						return newError("cannot interpolate arg - %s",
-							err)
-					}
-					inputs = append(inputs, buf.String())
+					inputs = append(inputs, input)
 				default:
 					return newError("argument to `$` not supported, got %s",
 						argT.Type())
@@ -255,6 +249,7 @@ var builtins = map[string]*object.Builtin{
 					len(args))
 			}
 			inputs := []string{}
+			envV := env.Export()
 			for i, arg := range args {
 				if arg.Type() != object.STRING_OBJ {
 					return newError("argument to `$` must be STRING, got %s",
@@ -262,7 +257,12 @@ var builtins = map[string]*object.Builtin{
 				}
 				switch argT := arg.(type) {
 				case *object.String:
-					inputs = append(inputs, argT.Value)
+					input, err := interpolate(envV, argT.Value)
+					if err != nil {
+						return newError("cannot parse arg for interpolation - %s",
+							err)
+					}
+					inputs = append(inputs, input)
 				default:
 					return newError("argument to `$` not supported, got %s",
 						argT.Type())
@@ -295,4 +295,17 @@ var builtins = map[string]*object.Builtin{
 			return NULL
 		},
 	},
+}
+
+func interpolate(envV map[string]interface{}, value string) (string, error) {
+	tmpl, err := template.New("test").Parse(value)
+	if err != nil {
+		return "", err
+	}
+	buf := bytes.NewBuffer([]byte{})
+	err = tmpl.Execute(buf, envV)
+	if err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }

@@ -25,7 +25,11 @@ var httpPkg = map[string]*object.Builtin{
 			}
 			switch arg := args[0].(type) {
 			case *object.String:
-				resp, err := http.Get(arg.Value)
+				a, err := interpolate(env.Export(), arg.Value)
+				if err != nil {
+					return newError(err.Error())
+				}
+				resp, err := http.Get(a)
 				if err != nil {
 					return newError(err.Error())
 				}
