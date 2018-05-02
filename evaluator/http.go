@@ -18,7 +18,7 @@ func init() {
 
 var httpPkg = map[string]*object.Builtin{
 	"Get": &object.Builtin{
-		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))

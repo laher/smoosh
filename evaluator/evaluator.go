@@ -92,8 +92,11 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if len(args) == 1 && isError(args[0]) {
 			return args[0]
 		}
+		defer func() {
+			go node.In.CloseAll() // ensure cleanup always happens
+		}()
 
-		return applyFunction(function, args, node.In, node.Out)
+		return applyFunction(function, args, node.In, node.Out, env)
 
 	case *ast.ArrayLiteral:
 		elements := evalExpressions(node.Elements, env)
@@ -363,7 +366,7 @@ func evalExpressions(
 	return result
 }
 
-func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes) object.Object {
+func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, env *object.Environment) object.Object {
 	switch fn := fn.(type) {
 
 	case *object.Function:
@@ -372,7 +375,7 @@ func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes) o
 		return unwrapReturnValue(evaluated)
 
 	case *object.Builtin:
-		return fn.Fn(in, out, args...)
+		return fn.Fn(env, in, out, args...)
 
 	default:
 		return newError("not a function: %s", fn.Type())

@@ -1,17 +1,19 @@
 package evaluator
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 
+	"github.com/alecthomas/template"
 	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
 var builtins = map[string]*object.Builtin{
-	"len": &object.Builtin{Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
+	"len": &object.Builtin{Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 		if len(args) != 1 {
 			return newError("wrong number of arguments. got=%d, want=1",
 				len(args))
@@ -29,7 +31,7 @@ var builtins = map[string]*object.Builtin{
 	},
 	},
 	"puts": &object.Builtin{
-		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 			for _, arg := range args {
 				fmt.Println(arg.Inspect())
 			}
@@ -38,7 +40,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"first": &object.Builtin{
-		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
@@ -57,7 +59,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"last": &object.Builtin{
-		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
@@ -77,7 +79,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"rest": &object.Builtin{
-		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
@@ -99,7 +101,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"push": &object.Builtin{
-		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) != 2 {
 				return newError("wrong number of arguments. got=%d, want=2",
 					len(args))
@@ -120,7 +122,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"pwd": &object.Builtin{
-		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) != 0 {
 				return newError("wrong number of arguments. got=%d, want=0",
 					len(args))
@@ -134,7 +136,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"cd": &object.Builtin{
-		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
@@ -158,7 +160,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"exit": &object.Builtin{
-		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) > 1 {
 				return newError("wrong number of arguments. got=%d, want=0/1",
 					len(args))
@@ -182,12 +184,13 @@ var builtins = map[string]*object.Builtin{
 	},
 
 	"$": &object.Builtin{
-		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) < 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
 			}
 			inputs := []string{}
+			envV := env.Export()
 			for i, arg := range args {
 				if arg.Type() != object.STRING_OBJ {
 					return newError("argument to `$` must be STRING, got %s",
@@ -195,7 +198,18 @@ var builtins = map[string]*object.Builtin{
 				}
 				switch argT := arg.(type) {
 				case *object.String:
-					inputs = append(inputs, argT.Value)
+					tmpl, err := template.New("test").Parse(argT.Value)
+					if err != nil {
+						return newError("cannot parse arg for interpolation - %s",
+							err)
+					}
+					buf := bytes.NewBuffer([]byte{})
+					err = tmpl.Execute(buf, envV)
+					if err != nil {
+						return newError("cannot interpolate arg - %s",
+							err)
+					}
+					inputs = append(inputs, buf.String())
 				default:
 					return newError("argument to `$` not supported, got %s",
 						argT.Type())
@@ -235,7 +249,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"w": &object.Builtin{
-		Fn: func(in, out *ast.Pipes, args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) < 1 || len(args) > 2 {
 				return newError("wrong number of arguments. got=%d, want=1 or 2",
 					len(args))

@@ -9,7 +9,7 @@ import (
 	"github.com/laher/smoosh/ast"
 )
 
-type BuiltinFunction func(in, out *ast.Pipes, args ...Object) Object
+type BuiltinFunction func(env *Environment, in, out *ast.Pipes, args ...Object) Object
 
 type ObjectType string
 
