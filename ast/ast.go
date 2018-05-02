@@ -98,7 +98,32 @@ func (rs *ReturnStatement) String() string {
 type Pipes struct {
 	Out  io.ReadCloser
 	Err  io.ReadCloser
-	Wait func() error
+	Wait func() error // Wait should be idempotent to allow for resource cleanup
+}
+
+// CloseAll closes pipes if open
+func (p *Pipes) CloseAll() error {
+
+	if p == nil {
+		return nil
+	}
+	var err error
+	if p.Wait != nil {
+		err = p.Wait()
+	}
+	if p.Out != nil {
+		var err2 = p.Out.Close()
+		if err2 != nil && err == nil {
+			return err2
+		}
+	}
+	if p.Err != nil {
+		var err2 = p.Err.Close()
+		if err2 != nil && err == nil {
+			return err2
+		}
+	}
+	return err
 }
 
 type ExpressionStatement struct {
