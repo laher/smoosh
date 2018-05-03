@@ -13,18 +13,6 @@ import (
 	"github.com/laher/smoosh/object"
 )
 
-// NewRunner initializes a Runner
-func NewRunner() *Runner {
-	return &Runner{true, true, false}
-}
-
-// Runner can run a repl or a program
-type Runner struct {
-	Parse    bool
-	Evaluate bool
-	Format   bool
-}
-
 func isPipedInput(in io.Reader) bool {
 	if stdin, ok := in.(*os.File); ok {
 		stat, _ := stdin.Stat()

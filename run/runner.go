@@ -15,6 +15,18 @@ import (
 	"github.com/laher/smoosh/token"
 )
 
+// NewRunner initializes a Runner
+func NewRunner() *Runner {
+	return &Runner{true, true, false}
+}
+
+// Runner can run a repl or a program
+type Runner struct {
+	Parse    bool
+	Evaluate bool
+	Format   bool
+}
+
 // RunFile runs a file as a single program
 func (r *Runner) RunFile(filename string, out io.Writer) error {
 	f, err := os.Open(filename)
