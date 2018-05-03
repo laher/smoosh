@@ -39,6 +39,11 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if isError(val) {
 			return val
 		}
+		if v, ok := env.Get(node.Name.Value); ok {
+			if val.Type() != v.Type() {
+				return newError("type %s but expected %s", val.Type(), v.Type())
+			}
+		}
 		env.Set(node.Name.Value, val)
 
 	// Expressions

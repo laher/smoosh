@@ -24,7 +24,7 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
   - [X] accept smoosh piped in from STDIN
   - [X] take in a filename(s) for processing as a script
   - [ ] support/ignore a hashbang at the top of a file
-  - [ ] support for piping external commands …
+  - [X] support for piping external commands …
 * Builtins:
   - [X] basic builtins such as `cd`, `exit`, `pwd`, `len`
   - [ ] `alias`, `unalias`
@@ -35,7 +35,7 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
   - [ ] Line numbers (_a challenge for the reader_)
 * Static types
   - [X] `let` replaced with initialisation (`var` keyword) and plain old reassignment
-  - [ ] type checking
+  - [X] type checking
 * Pad out some fundamental language features missing from monkey (floats, …)
   - [ ] floats/doubles
   - [ ] bitwise operators/logic?
@@ -44,11 +44,11 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
 * A rich standard library (based on parts of Go's standard lib)
 * Piping/execing primitives.
   AFAICT these primitives can be implemented as 'shorthands' or syntactic sugar for `os.Exec`
-  - [ ] `$""` for running external commands. 
-  - [ ] `$()` should be used for running commands inline, as in bash.
+  - [X] `$("")` for running external commands. 
+  - [ ]  some other syntax for running commands inline, as in bash.
   - [ ] `|` for piping. _Hopefully, typed pipes for slices._
 * Go templating in place of bourne-style interpolation
-  - [ ] templating inside standard strings
+  - [X] templating inside standard strings
   - [ ] multiline strings (syntax??)
 * Unicode support.
   - [X] Parse smoosh in runes instead of bytes (_a challenge for the reader_)
