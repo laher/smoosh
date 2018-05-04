@@ -58,13 +58,18 @@ func (r *Runner) runData(data string, out io.Writer, env *object.Environment) er
 		}
 		if r.Evaluate {
 			result := evaluator.Eval(program, env)
-			if _, ok := result.(*object.Null); ok {
-				return nil
-			}
 			if result == nil {
 				return nil
 			}
-			if pipes, ok := result.(*object.Pipes); ok {
+
+			switch r := result.(type) {
+			case *object.Null:
+				return nil
+			case *object.Error:
+				return fmt.Errorf("%s", r.Message)
+
+			case *object.Pipes:
+				pipes := r
 				cmdOut, err := ioutil.ReadAll(pipes.Out)
 				if err != nil {
 					return err
@@ -76,6 +81,7 @@ func (r *Runner) runData(data string, out io.Writer, env *object.Environment) er
 				_, err = fmt.Fprintf(out, "%s", cmdOut)
 				return err
 			}
+
 			_, err := io.WriteString(out, result.Inspect()+"\n")
 			return err
 		}
