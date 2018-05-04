@@ -48,6 +48,8 @@ const (
 
 	// Execution
 	PIPE = "|"
+
+	HASH = "#"
 )
 
 type Token struct {

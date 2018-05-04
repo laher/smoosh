@@ -38,6 +38,8 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
   - [X] type checking
 * Pad out some fundamental language features missing from monkey (floats, …)
   - [ ] floats/doubles
+  - [ ] loops
+  - [ ] comments
   - [ ] bitwise operators/logic?
   - [ ] bytes, reader, writer. Rune?
   - [ ] streams?

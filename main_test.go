@@ -12,6 +12,7 @@ func TestExamples(t *testing.T) {
 	files := []string{
 		"examples/sm1.smoosh",
 		"examples/sm2.smoosh",
+		"examples/comment.smoosh",
 	}
 	pwd, _ := os.Getwd()
 	for _, f := range files {

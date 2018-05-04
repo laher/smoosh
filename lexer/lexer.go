@@ -87,6 +87,9 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.RBRACKET, l.ru)
 	case '|':
 		tok = newToken(token.PIPE, l.ru)
+	case '#':
+		tok = newToken(token.HASH, l.ru)
+		tok.Literal = l.readLine()
 	case 0, utf8.RuneError:
 		tok.Literal = ""
 		tok.Type = token.EOF
@@ -139,6 +142,17 @@ func (l *Lexer) readString() string {
 	for {
 		l.readRune()
 		if l.ru == '"' || l.ru == utf8.RuneError || l.ru == 0 {
+			break
+		}
+	}
+	return l.input[position:l.position]
+}
+
+func (l *Lexer) readLine() string {
+	position := l.position + 1
+	for {
+		l.readRune()
+		if l.ru == '\n' || l.ru == utf8.RuneError || l.ru == 0 { //TODO is this cross-platform?
 			break
 		}
 	}
