@@ -126,6 +126,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 	case *ast.PipeExpression:
 		return Eval(node.Destination, env)
+	case *ast.ForExpression:
+		return evalForExpression(node, env)
 	}
 
 	return nil
@@ -313,6 +315,29 @@ func evalIfExpression(
 	} else {
 		return NULL
 	}
+}
+
+func evalForExpression(
+	fe *ast.ForExpression,
+	env *object.Environment,
+) object.Object {
+
+	it := Eval(fe.Iterator, env)
+
+	if it.Type() != object.ARRAY_OBJ {
+		return newError("only arrays supported: " + string(it.Type()))
+	}
+
+	var ret object.Object
+	for i, v := range it.(*object.Array).Elements {
+		extendedEnv := object.NewEnclosedEnvironment(env)
+		if fe.Identifier != nil {
+			extendedEnv.Set(fe.Identifier.String(), &object.Integer{Value: int64(i)})
+		}
+		extendedEnv.Set(fe.Iteree.String(), v)
+		ret = Eval(fe.Body, extendedEnv)
+	}
+	return ret
 }
 
 func evalIdentifier(

@@ -247,6 +247,26 @@ var builtins = map[string]*object.Builtin{
 			return NULL
 		},
 	},
+	"echo": &object.Builtin{
+		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+			if len(args) < 1 || len(args) > 2 {
+				return newError("wrong number of arguments. got=%d, want=1 or 2",
+					len(args))
+			}
+			inputs, err := interpolateArgsAsStrings(env, args)
+			if err != nil {
+				return newError(err.Error())
+			}
+			f := os.Stdout
+			if out != nil {
+				// ?
+			}
+			for _, w := range inputs {
+				fmt.Fprintf(f, "%s", w)
+			}
+			return NULL
+		},
+	},
 	"w": &object.Builtin{
 		Fn: func(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 			if len(args) < 1 || len(args) > 2 {

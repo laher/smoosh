@@ -253,6 +253,32 @@ func (ie *IfExpression) String() string {
 	return out.String()
 }
 
+type ForExpression struct {
+	Token      token.Token // The 'if' token
+	Identifier Expression
+	Iteree     Expression
+	Iterator   Expression
+	Body       *BlockStatement
+}
+
+func (ie *ForExpression) expressionNode()      {}
+func (ie *ForExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *ForExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("for")
+	out.WriteString(ie.Identifier.String())
+	out.WriteString(", ")
+	out.WriteString(ie.Iteree.String())
+	out.WriteString(" := ")
+	out.WriteString(ie.Iterator.String())
+	out.WriteString(" {\n")
+	out.WriteString(ie.Body.String())
+	out.WriteString("}\n")
+
+	return out.String()
+}
+
 type PipeExpression struct {
 	Token       token.Token // The '|' token
 	Destination *CallExpression
