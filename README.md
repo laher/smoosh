@@ -23,13 +23,24 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
 * Repurpose monkey as a 'shell':
   - [X] accept smoosh piped in from STDIN
   - [X] take in a filename(s) for processing as a script
-  - [ ] support/ignore a hashbang at the top of a file
+  - [X] support/ignore a hashbang at the top of a file
   - [X] support for piping external commands …
+  - [ ] support for exit codes, signals
+  - [ ] support for interactive commands
+  - [ ] history
+  - [ ] key mappings for repl (up-arrow, home, end, etc)
+  - [ ] pimping: shell completion, colours, etc
 * Builtins:
   - [X] basic builtins such as `cd`, `exit`, `pwd`, `len`
+  - [X] Redirection helpers which avoid `>`/`<` symbols (avoid gt/lt collisions). i.e. `r()` and `w()`
+  - [ ] `a()` for append-to-file
   - [ ] `alias`, `unalias`
+  - [ ] pipe stuff e.g. `red(2,1)` for redirection
+  - [ ] process-handling stuff (signals, exit codes, async processing ...)
+  - [ ] file-handling stuff (exists, is-directory, r/w/x permissions)
+  - [ ] env stuff
 * Tooling:
-  - [X] `smoosh-fmt` to format a smoosh script in a standard format
+  - [X] `smoosh -fmt` to format a smoosh script in a standard format
   - [X] Alternate REPL to print lexer results
   - [X] Alternate REPL to print AST as json
   - [ ] Line numbers (_a challenge for the reader_)
@@ -38,8 +49,8 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
   - [X] type checking
 * Pad out some fundamental language features missing from monkey (floats, …)
   - [ ] floats/doubles
-  - [ ] loops
-  - [ ] comments
+  - [X] loops
+  - [X] comments
   - [ ] bitwise operators/logic?
   - [ ] bytes, reader, writer. Rune?
   - [ ] streams?
@@ -47,8 +58,7 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
 * Piping/execing primitives.
   AFAICT these primitives can be implemented as 'shorthands' or syntactic sugar for `os.Exec`
   - [X] `$("")` for running external commands. 
-  - [ ]  some other syntax for running commands inline, as in bash.
-  - [ ] `|` for piping. _Hopefully, typed pipes for slices._
+  - [X] `|` for piping. _Hopefully, typed pipes for slices._
 * Go templating in place of bourne-style interpolation
   - [X] templating inside standard strings
   - [ ] multiline strings (syntax??)
