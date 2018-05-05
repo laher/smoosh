@@ -52,9 +52,13 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
   - [X] loops
   - [X] comments
   - [ ] bitwise operators/logic?
-  - [ ] bytes, reader, writer. Rune?
-  - [ ] streams?
-* A rich standard library (based on parts of Go's standard lib)
+  - [ ] bytes, reader, writer. Rune? streams?
+* A standard library (based on parts of Go's standard lib)
+  - [X] A single example (http.Get)
+  - [ ] Some kind of hook into Go's stdlib (without wrapping every dam thing)
+* Dependencies
+  - [ ] including files/packages
+  - [ ] referencing 3rd party Go packages - are plugins needed here?
 * Piping/execing primitives.
   AFAICT these primitives can be implemented as 'shorthands' or syntactic sugar for `os.Exec`
   - [X] `$("")` for running external commands. 

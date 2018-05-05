@@ -261,8 +261,13 @@ var builtins = map[string]*object.Builtin{
 			if out != nil {
 				// ?
 			}
-			for _, w := range inputs {
-				fmt.Fprintf(f, "%s", w)
+			for i, w := range inputs {
+				s := " "
+				if len(inputs) == i+1 {
+					s = "\n"
+				}
+
+				fmt.Fprintf(f, "%s%s", w, s)
 			}
 			return NULL
 		},

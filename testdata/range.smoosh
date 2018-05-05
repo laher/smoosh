@@ -1,5 +1,10 @@
 var x=["a", "b"]
 
-for (i = x) {
-  echo("{{.i}} ")
+echo("Range. Values only:")
+for (j = x) {
+  echo("{{.j}}")
+}
+echo("Range. Indices and Values:")
+for (i, j = x) {
+  echo("{{.i}}:{{.j}}")
 }

@@ -1,3 +1,4 @@
+#!/usr/bin/smoosh 
 
 cd("..")
 if (1 == 1) {
