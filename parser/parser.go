@@ -134,13 +134,13 @@ func (p *Parser) Errors() []string {
 }
 
 func (p *Parser) peekError(t token.TokenType) {
-	msg := fmt.Sprintf("expected next token to be %s, got %s instead",
+	msg := fmt.Sprintf("L%d: expected next token to be %s, got %s instead", p.peekToken.Line,
 		t, p.peekToken.Type)
 	p.errors = append(p.errors, msg)
 }
 
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-	msg := fmt.Sprintf("no prefix parse function for %s found", t)
+	msg := fmt.Sprintf("L%d: no prefix parse function for %s found", p.curToken.Line, t)
 	p.errors = append(p.errors, msg)
 }
 
@@ -281,7 +281,7 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 
 	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
 	if err != nil {
-		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Literal)
+		msg := fmt.Sprintf("L%d: could not parse %q as integer", p.curToken.Line, p.curToken.Literal)
 		p.errors = append(p.errors, msg)
 		return nil
 	}

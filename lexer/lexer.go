@@ -18,11 +18,12 @@ type Lexer struct {
 	position     int  // current position in input (points to current rune)
 	readPosition int  // current reading position in input (after current rune)
 	ru           rune // current rune under examination
+	line         int  //current line number
 }
 
 // New creates and initialises a new lexer
 func New(input string) *Lexer {
-	l := &Lexer{input: input}
+	l := &Lexer{input: input, line: 1}
 	l.readRune()
 	return l
 }
@@ -39,56 +40,56 @@ func (l *Lexer) NextToken() token.Token {
 			ch := l.ru
 			l.readRune()
 			literal := string(ch) + string(l.ru)
-			tok = token.Token{Type: token.EQ, Literal: literal}
+			tok = token.Token{Type: token.EQ, Literal: literal, Line: l.line}
 		} else {
-			tok = newToken(token.ASSIGN, l.ru)
+			tok = newToken(token.ASSIGN, l.ru, l.line)
 		}
 	case '+':
-		tok = newToken(token.PLUS, l.ru)
+		tok = newToken(token.PLUS, l.ru, l.line)
 	case '-':
-		tok = newToken(token.MINUS, l.ru)
+		tok = newToken(token.MINUS, l.ru, l.line)
 	case '!':
 		if l.peekChar() == '=' {
 			ch := l.ru
 			l.readRune()
 			literal := string(ch) + string(l.ru)
-			tok = token.Token{Type: token.NOT_EQ, Literal: literal}
+			tok = token.Token{Type: token.NOT_EQ, Literal: literal, Line: l.line}
 		} else {
-			tok = newToken(token.BANG, l.ru)
+			tok = newToken(token.BANG, l.ru, l.line)
 		}
 	case '/':
-		tok = newToken(token.SLASH, l.ru)
+		tok = newToken(token.SLASH, l.ru, l.line)
 	case '*':
-		tok = newToken(token.ASTERISK, l.ru)
+		tok = newToken(token.ASTERISK, l.ru, l.line)
 	case '<':
-		tok = newToken(token.LT, l.ru)
+		tok = newToken(token.LT, l.ru, l.line)
 	case '>':
-		tok = newToken(token.GT, l.ru)
+		tok = newToken(token.GT, l.ru, l.line)
 	case ';':
-		tok = newToken(token.SEMICOLON, l.ru)
+		tok = newToken(token.SEMICOLON, l.ru, l.line)
 	case ':':
-		tok = newToken(token.COLON, l.ru)
+		tok = newToken(token.COLON, l.ru, l.line)
 	case ',':
-		tok = newToken(token.COMMA, l.ru)
+		tok = newToken(token.COMMA, l.ru, l.line)
 	case '{':
-		tok = newToken(token.LBRACE, l.ru)
+		tok = newToken(token.LBRACE, l.ru, l.line)
 	case '}':
-		tok = newToken(token.RBRACE, l.ru)
+		tok = newToken(token.RBRACE, l.ru, l.line)
 	case '(':
-		tok = newToken(token.LPAREN, l.ru)
+		tok = newToken(token.LPAREN, l.ru, l.line)
 	case ')':
-		tok = newToken(token.RPAREN, l.ru)
+		tok = newToken(token.RPAREN, l.ru, l.line)
 	case '"':
 		tok.Type = token.STRING
 		tok.Literal = l.readString()
 	case '[':
-		tok = newToken(token.LBRACKET, l.ru)
+		tok = newToken(token.LBRACKET, l.ru, l.line)
 	case ']':
-		tok = newToken(token.RBRACKET, l.ru)
+		tok = newToken(token.RBRACKET, l.ru, l.line)
 	case '|':
-		tok = newToken(token.PIPE, l.ru)
+		tok = newToken(token.PIPE, l.ru, l.line)
 	case '#':
-		tok = newToken(token.HASH, l.ru)
+		tok = newToken(token.HASH, l.ru, l.line)
 		tok.Literal = l.readLine()
 	case 0, utf8.RuneError:
 		tok.Literal = ""
@@ -104,7 +105,7 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Literal = l.readNumber()
 			return tok
 		}
-		tok = newToken(token.ILLEGAL, l.ru)
+		tok = newToken(token.ILLEGAL, l.ru, l.line)
 	}
 
 	l.readRune()
@@ -113,6 +114,9 @@ func (l *Lexer) NextToken() token.Token {
 
 func (l *Lexer) skipWhitespace() {
 	for l.ru == ' ' || l.ru == '\t' || l.ru == '\n' || l.ru == '\r' {
+		if l.ru == '\n' {
+			l.line++
+		}
 		l.readRune()
 	}
 }
@@ -178,6 +182,6 @@ func isDigit(ch rune) bool {
 	return '0' <= ch && ch <= '9'
 }
 
-func newToken(tokenType token.TokenType, ch rune) token.Token {
-	return token.Token{Type: tokenType, Literal: string(ch)}
+func newToken(tokenType token.TokenType, ch rune, line int) token.Token {
+	return token.Token{Type: tokenType, Literal: string(ch), Line: line}
 }
