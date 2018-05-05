@@ -126,6 +126,10 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 	case *ast.PipeExpression:
 		return Eval(node.Destination, env)
+
+	case *ast.RangeExpression:
+		return evalRangeExpression(node, env)
+
 	case *ast.ForExpression:
 		return evalForExpression(node, env)
 	}
@@ -317,9 +321,8 @@ func evalIfExpression(
 	}
 }
 
-func evalForExpression(
-	fe *ast.ForExpression,
-	env *object.Environment,
+func evalRangeExpression(
+	fe *ast.RangeExpression, env *object.Environment,
 ) object.Object {
 
 	it := Eval(fe.Iterator, env)
@@ -331,11 +334,39 @@ func evalForExpression(
 	var ret object.Object
 	for i, v := range it.(*object.Array).Elements {
 		extendedEnv := object.NewEnclosedEnvironment(env)
-		if fe.Identifier != nil {
-			extendedEnv.Set(fe.Identifier.String(), &object.Integer{Value: int64(i)})
+		extendedEnv.Set(fe.Identifier.String(), &object.Integer{Value: int64(i)})
+		if fe.Iteree != nil {
+			extendedEnv.Set(fe.Iteree.String(), v)
 		}
-		extendedEnv.Set(fe.Iteree.String(), v)
 		ret = Eval(fe.Body, extendedEnv)
+	}
+	return ret
+}
+
+func evalForExpression(
+	fe *ast.ForExpression, env *object.Environment,
+) object.Object {
+
+	init := Eval(fe.Init, env)
+	if init != nil && init.Type() == object.ERROR_OBJ {
+		return newError("Error returned from FOR init: " + string(init.Type()))
+	}
+
+	var ret object.Object
+	i := 0
+	for {
+		i++
+		c := Eval(fe.Condition, env)
+		if c.Type() != object.BOOLEAN_OBJ {
+			return newError("Error returned from FOR condition: " + string(c.Type()))
+		}
+		if !c.(*object.Boolean).Value {
+			break
+		}
+		extendedEnv := object.NewEnclosedEnvironment(env)
+		//TODO FOR varables
+		ret = Eval(fe.Body, extendedEnv)
+		Eval(fe.After, env)
 	}
 	return ret
 }

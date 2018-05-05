@@ -1,0 +1,6 @@
+#!/usr/bin/smoosh
+
+echo("For:")
+for (j = 1; j<10; j=j+1) {
+  echo("{{.j}}")
+}

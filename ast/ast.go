@@ -254,11 +254,11 @@ func (ie *IfExpression) String() string {
 }
 
 type ForExpression struct {
-	Token      token.Token // The 'if' token
-	Identifier Expression
-	Iteree     Expression
-	Iterator   Expression
-	Body       *BlockStatement
+	Token     token.Token
+	Init      Statement
+	Condition Expression
+	After     Statement
+	Body      *BlockStatement
 }
 
 func (ie *ForExpression) expressionNode()      {}
@@ -266,13 +266,41 @@ func (ie *ForExpression) TokenLiteral() string { return ie.Token.Literal }
 func (ie *ForExpression) String() string {
 	var out bytes.Buffer
 
-	out.WriteString("for")
-	out.WriteString(ie.Identifier.String())
-	out.WriteString(", ")
-	out.WriteString(ie.Iteree.String())
-	out.WriteString(" := ")
-	out.WriteString(ie.Iterator.String())
+	out.WriteString("for ")
+	out.WriteString(ie.Init.String())
+	out.WriteString("; ")
+	out.WriteString(ie.Condition.String())
+	out.WriteString("; ")
+	out.WriteString(ie.After.String())
 	out.WriteString(" {\n")
+	out.WriteString(ie.Body.String())
+	out.WriteString("}\n")
+
+	return out.String()
+}
+
+type RangeExpression struct {
+	Token      token.Token // The 'if' token
+	Identifier Expression
+	Iteree     Expression
+	Iterator   Expression
+	Body       *BlockStatement
+}
+
+func (ie *RangeExpression) expressionNode()      {}
+func (ie *RangeExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *RangeExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("range (")
+	out.WriteString(ie.Identifier.String())
+	if ie.Iteree != nil {
+		out.WriteString(", ")
+		out.WriteString(ie.Iteree.String())
+	}
+	out.WriteString(" = ")
+	out.WriteString(ie.Iterator.String())
+	out.WriteString(") {\n")
 	out.WriteString(ie.Body.String())
 	out.WriteString("}\n")
 

@@ -69,6 +69,7 @@ var keywords = map[string]TokenType{
 	"else":   ELSE,
 	"return": RETURN,
 	"for":    FOR,
+	"range":  RANGE,
 }
 
 func LookupIdent(ident string) TokenType {

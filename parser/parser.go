@@ -85,6 +85,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.LBRACE, p.parseHashLiteral)
 	p.registerPrefix(token.HASH, p.parseCommentLiteral)
 	p.registerPrefix(token.FOR, p.parseForExpression)
+	p.registerPrefix(token.RANGE, p.parseRangeExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -377,19 +378,45 @@ func (p *Parser) parseIfExpression() ast.Expression {
 
 func (p *Parser) parseForExpression() ast.Expression {
 	expression := &ast.ForExpression{Token: p.curToken}
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+	p.nextToken()
+	expression.Init = p.parseStatement()
+	p.nextToken()
+	expression.Condition = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.SEMICOLON) {
+		return nil
+	}
+	p.nextToken()
+	expression.After = p.parseStatement()
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+
+	expression.Body = p.parseBlockStatement()
+
+	return expression
+}
+
+func (p *Parser) parseRangeExpression() ast.Expression {
+	expression := &ast.RangeExpression{Token: p.curToken}
 
 	if !p.expectPeek(token.LPAREN) {
 		return nil
 	}
 	p.nextToken()
+	expression.Identifier = p.parseExpression(LOWEST)
 	if p.peekTokenIs(token.COMMA) {
-		expression.Identifier = p.parseExpression(LOWEST)
-		if !p.expectPeek(token.COMMA) {
-			return nil
-		}
+		p.nextToken() //consume comma
 		p.nextToken()
+		expression.Iteree = p.parseExpression(LOWEST)
 	}
-	expression.Iteree = p.parseExpression(LOWEST)
 	if !p.expectPeek(token.ASSIGN) {
 		return nil
 	}
