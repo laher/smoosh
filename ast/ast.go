@@ -68,7 +68,7 @@ func (ls *AssignStatement) String() string {
 		out.WriteString(ls.Value.String())
 	}
 
-	out.WriteString("\n")
+	out.WriteString(" ")
 
 	return out.String()
 }
@@ -151,7 +151,7 @@ func (bs *BlockStatement) String() string {
 	var out bytes.Buffer
 
 	for _, s := range bs.Statements {
-		out.WriteString(s.String())
+		out.WriteString("  " + s.String())
 	}
 
 	out.WriteString("\n")
@@ -217,11 +217,11 @@ func (oe *InfixExpression) TokenLiteral() string { return oe.Token.Literal }
 func (oe *InfixExpression) String() string {
 	var out bytes.Buffer
 
-	out.WriteString("(")
+	//out.WriteString("(")
 	out.WriteString(oe.Left.String())
 	out.WriteString(" " + oe.Operator + " ")
 	out.WriteString(oe.Right.String())
-	out.WriteString(")")
+	//out.WriteString(")")
 
 	return out.String()
 }
@@ -254,11 +254,12 @@ func (ie *IfExpression) String() string {
 }
 
 type ForExpression struct {
-	Token     token.Token
-	Init      Statement
-	Condition Expression
-	After     Statement
-	Body      *BlockStatement
+	Token       token.Token
+	Init        Statement
+	Condition   Expression
+	After       Statement
+	Body        *BlockStatement
+	Indentation int
 }
 
 func (ie *ForExpression) expressionNode()      {}
@@ -266,13 +267,13 @@ func (ie *ForExpression) TokenLiteral() string { return ie.Token.Literal }
 func (ie *ForExpression) String() string {
 	var out bytes.Buffer
 
-	out.WriteString("for ")
+	out.WriteString("\nfor (")
 	out.WriteString(ie.Init.String())
 	out.WriteString("; ")
 	out.WriteString(ie.Condition.String())
 	out.WriteString("; ")
 	out.WriteString(ie.After.String())
-	out.WriteString(" {\n")
+	out.WriteString(") {\n")
 	out.WriteString(ie.Body.String())
 	out.WriteString("}\n")
 
@@ -292,7 +293,7 @@ func (ie *RangeExpression) TokenLiteral() string { return ie.Token.Literal }
 func (ie *RangeExpression) String() string {
 	var out bytes.Buffer
 
-	out.WriteString("range (")
+	out.WriteString("\nrange (")
 	out.WriteString(ie.Identifier.String())
 	if ie.Iteree != nil {
 		out.WriteString(", ")
@@ -381,7 +382,7 @@ type StringLiteral struct {
 
 func (sl *StringLiteral) expressionNode()      {}
 func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Literal }
-func (sl *StringLiteral) String() string       { return sl.Token.Literal }
+func (sl *StringLiteral) String() string       { return "\"" + sl.Token.Literal + "\"" }
 
 type CommentLiteral struct {
 	Token token.Token
@@ -390,7 +391,7 @@ type CommentLiteral struct {
 
 func (sl *CommentLiteral) expressionNode()      {}
 func (sl *CommentLiteral) TokenLiteral() string { return sl.Token.Literal }
-func (sl *CommentLiteral) String() string       { return sl.Token.Literal }
+func (sl *CommentLiteral) String() string       { return sl.Token.Literal + "\n" }
 
 type ArrayLiteral struct {
 	Token    token.Token // the '[' token
