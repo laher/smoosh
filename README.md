@@ -43,7 +43,7 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
   - [X] `smoosh -fmt` to format a smoosh script in a standard format
   - [X] Alternate REPL to print lexer results
   - [X] Alternate REPL to print AST as json
-  - [ ] Line numbers (_a challenge for the reader_)
+  - [X] Line numbers (_a challenge for the reader_)
 * Static types
   - [X] `let` replaced with initialisation (`var` keyword) and plain old reassignment
   - [X] type checking
