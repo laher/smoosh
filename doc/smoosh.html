@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Smoosh</title>
-<!-- 2018-05-14 Mon 20:47 -->
+<!-- 2018-05-15 Tue 07:22 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="Am Laher" />
@@ -149,7 +149,7 @@ for the JavaScript code in this tag.
 <div id="text-table-of-contents">
 <ul>
 <li><a href="#sec-1">1. Overview</a></li>
-<li><a href="#sec-2">2. What's an interpeter, what's a compiler, what's a shell?</a>
+<li><a href="#sec-2">2. Interpeter vs compiler; what's a shell?</a>
 <ul>
 <li><a href="#sec-2-1">2.1. Compiler vs interpreter</a></li>
 <li><a href="#sec-2-2">2.2. What's a shell</a></li>
@@ -157,12 +157,14 @@ for the JavaScript code in this tag.
 <li><a href="#sec-2-4">2.4. Solution?</a></li>
 </ul>
 </li>
-<li><a href="#sec-3">3. Our Interpreter: flow diagram</a>
+<li><a href="#sec-3">3. Our Interpreter: Smoosh</a>
 <ul>
-<li><a href="#sec-3-1">3.1. Packages</a></li>
+<li><a href="#sec-3-1">3.1. flow diagram</a></li>
+<li><a href="#sec-3-2">3.2. Packages</a></li>
+<li><a href="#sec-3-3">3.3. Smoosh on github</a></li>
 </ul>
 </li>
-<li><a href="#sec-4">4. Go compiler</a></li>
+<li><a href="#sec-4">4. Monkey vs Go compiler</a></li>
 <li><a href="#sec-5">5. Phases of the interpreter</a>
 <ul>
 <li><a href="#sec-5-1">5.1. Tokenizing</a></li>
@@ -171,7 +173,14 @@ for the JavaScript code in this tag.
 <li><a href="#sec-5-4">5.4. Runner</a></li>
 </ul>
 </li>
-<li><a href="#sec-6">6. Code samples</a></li>
+<li><a href="#sec-6">6. Tooling</a></li>
+<li><a href="#sec-7">7. Code samples</a></li>
+<li><a href="#sec-8">8. Add features?</a>
+<ul>
+<li><a href="#sec-8-1">8.1. Write some end-to-end tests</a></li>
+<li><a href="#sec-8-2">8.2. Examples to choose from</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -204,16 +213,20 @@ The book itself is copyrighted <span class="underline">but</span> the code is MI
 </li>
 <li>I'll try to explain what problem Smoosh is trying to solve.
 </li>
-<li>Review some Monkey, and various Smoosh changes, to help illustrate the different parts of the system.
+<li>Review some Smoosh code, to help illustrate the different parts of the system.
 </li>
-<li>Along the way I'll try to show what Go gives us to help make this all kinda easy.
+<li>Hopefully, add a feature with some live coding
 </li>
 </ul>
+
+<p>
+Along the way I'll try to show what Go gives us to help make this all kinda easy.
+</p>
 </div>
 </div>
 
 <div id="outline-container-sec-2" class="outline-2">
-<h2 id="sec-2"><span class="section-number-2">2</span> What's an interpeter, what's a compiler, what's a shell?</h2>
+<h2 id="sec-2"><span class="section-number-2">2</span> Interpeter vs compiler; what's a shell?</h2>
 <div class="outline-text-2" id="text-2">
 </div><div id="outline-container-sec-2-1" class="outline-3">
 <h3 id="sec-2-1"><span class="section-number-3">2.1</span> Compiler vs interpreter</h3>
@@ -221,9 +234,9 @@ The book itself is copyrighted <span class="underline">but</span> the code is MI
 <ul class="org-ul">
 <li>An interpreter directly executes instructions rather than compiling them to machine code in advance.
 </li>
-<li>Some platforms offer an interpreter AND a compiler - the difference is a bit blurry
+<li>Some platforms offer an interpreter AND a compiler (<code>go run</code>, anyone?) - the difference is a bit blurry.
 </li>
-<li>Several varieties of interpreter. We'll just look at the style used in Monkey
+<li>Several varieties of interpreter. We'll just look at the style used in Monkey.
 </li>
 <li>Monkey executes precompiled code using an intermediate representation called an AST - ASTs are more often used in Compiled languages, e.g. Go itself
 </li>
@@ -240,6 +253,18 @@ The book itself is copyrighted <span class="underline">but</span> the code is MI
 <li>For this talk, let's define a shell as:
 <ul class="org-ul">
 <li>A shell is fundamentally an interpeter which is convenient for chaining executables together in a pipeline
+</li>
+<li>A shell only needs a basic type system:
+<ul class="org-ul">
+<li>Strings, numbers, bools, maps, arrays
+</li>
+<li>(i.e. no User-Defined types)
+</li>
+<li>I/O streams
+</li>
+</ul>
+</li>
+<li>First-class support for I/O pipelines
 </li>
 </ul>
 </li>
@@ -291,47 +316,27 @@ The book itself is copyrighted <span class="underline">but</span> the code is MI
 </div>
 
 <div id="outline-container-sec-3" class="outline-2">
-<h2 id="sec-3"><span class="section-number-2">3</span> Our Interpreter: flow diagram</h2>
+<h2 id="sec-3"><span class="section-number-2">3</span> Our Interpreter: Smoosh</h2>
 <div class="outline-text-2" id="text-3">
-<div class="org-src-container">
-
-<pre class="src src-dot">digraph Smoosh {
-    rankdir="LR";
-    node[shape=rectangle];
-    edge[weight=2];
-    Lexer[shape=cds];
-    Parser[shape=cds];
-    Evaluation[shape=cds];
-    REPL[shape=cds];
-    subgraph cluster1 {
-       label="Phases"
-       Lexer -&gt; Parser;
-       Parser -&gt; Evaluation;
-       Evaluation -&gt; REPL;
-    }
-    Source[shape=cylinder];
-    Tokens[shape=cylinder];
-    AST[shape=cylinder];
-    Object[shape=cylinder];
-    subgraph cluster2 {
-       label="Representations"
-       Source -&gt; Tokens [label=lexing];
-       Source -&gt;Lexer [style=dashed];
-       Tokens-&gt;AST [ label=parsing ];
-       Lexer -&gt;Tokens [style=dashed];
-       Tokens -&gt; Parser [style=dashed];
-       Parser -&gt; AST [style=dashed];
-       AST-&gt;Object [ label=evaluation ];
-    }
-    edge[weight=1];
-}
-</pre>
-</div>
+<p>
+Smoosh is basically the same as Monkey in terms of structure and approach to interpreting code.
+</p>
 </div>
 
 <div id="outline-container-sec-3-1" class="outline-3">
-<h3 id="sec-3-1"><span class="section-number-3">3.1</span> Packages</h3>
+<h3 id="sec-3-1"><span class="section-number-3">3.1</span> flow diagram</h3>
 <div class="outline-text-3" id="text-3-1">
+
+<div class="figure">
+<p><img src="smoosh.svg" alt="smoosh.svg" />
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2"><span class="section-number-3">3.2</span> Packages</h3>
+<div class="outline-text-3" id="text-3-2">
 <p>
 This diagram generated by 'godepgraph' shows the simplicity of the Monkey/Smoosh interpreter
 </p>
@@ -343,13 +348,26 @@ This diagram generated by 'godepgraph' shows the simplicity of the Monkey/Smoosh
 </div>
 </div>
 </div>
+
+<div id="outline-container-sec-3-3" class="outline-3">
+<h3 id="sec-3-3"><span class="section-number-3">3.3</span> Smoosh on github</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+<a href="https://github.com/laher/smoosh">https://github.com/laher/smoosh</a>
+</p>
+
+<p>
+See README for project status
+</p>
+</div>
+</div>
 </div>
 
 <div id="outline-container-sec-4" class="outline-2">
-<h2 id="sec-4"><span class="section-number-2">4</span> Go compiler</h2>
+<h2 id="sec-4"><span class="section-number-2">4</span> Monkey vs Go compiler</h2>
 <div class="outline-text-2" id="text-4">
 <p>
-Monkey is similar to the Go compiler up to a point.
+Monkey/Smoosh is similar to the Go compiler up to a point.
 </p>
 <ul class="org-ul">
 <li>The Go compiler first tokenizes code
@@ -445,7 +463,7 @@ Monkey is similar to the Go compiler up to a point.
 </li>
 <li>I also added a second mode of operation - a 'file runner'
 </li>
-<li>See [[
+<li>See <a href="https://github.com/laher/smoosh/blob/master/run/runner.go">runner.go</a>
 </li>
 </ul>
 </div>
@@ -453,37 +471,82 @@ Monkey is similar to the Go compiler up to a point.
 </div>
 
 <div id="outline-container-sec-6" class="outline-2">
-<h2 id="sec-6"><span class="section-number-2">6</span> Code samples</h2>
+<h2 id="sec-6"><span class="section-number-2">6</span> Tooling</h2>
 <div class="outline-text-2" id="text-6">
 <ul class="org-ul">
-<li>Adding a new token - E.g. one-line comments
-</li>
-<li>Add a builtin function, e.g. `cd`
-</li>
-<li>Adding type-checking - var-&gt;let, check existing Objects during eval
-</li>
-<li>Adding some syntax - 'for-range loops'
-</li>
-<li>Adding 'piping'
-</li>
-<li>Building a standard library akin to Go's stdlib
+<li>REPL flavours
 </li>
 <li>Formatting code
 </li>
+<li>End-to-end testing
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7"><span class="section-number-2">7</span> Code samples</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+Let's cover at least 3 of these
+</p>
+<ul class="org-ul">
+<li>Adding a new token - E.g. one-line comments
+</li>
+<li>Add a builtin function, e.g. <code>cd</code>
+</li>
+<li>Adding 'piping'
+</li>
+<li>Adding type-checking - <code>let</code> -&gt; <code>var</code> (like go); check existing Objects during eval
+</li>
+<li>Adding some syntax - 'for-range loops'
+</li>
+<li>Building a standard library akin to Go's stdlib
+</li>
 <li>Unicode support
 </li>
-<li>REPL flavours
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-8" class="outline-2">
+<h2 id="sec-8"><span class="section-number-2">8</span> Add features?</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+If we have time, let's try some live-coding of Smoosh
+</p>
+</div>
+<div id="outline-container-sec-8-1" class="outline-3">
+<h3 id="sec-8-1"><span class="section-number-3">8.1</span> Write some end-to-end tests</h3>
+<div class="outline-text-3" id="text-8-1">
+<ul class="org-ul">
+<li>One good, one bad.
 </li>
-<li>Integration testing
-≠
+<li>Make them pass
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-sec-8-2" class="outline-3">
+<h3 id="sec-8-2"><span class="section-number-3">8.2</span> Examples to choose from</h3>
+<div class="outline-text-3" id="text-8-2">
+<ul class="org-ul">
+<li>A new stdlib function
+</li>
+<li>Backticks for some more concise command invocation
+</li>
+<li>Handling exit codes
+</li>
+<li>Floats
 </li>
 </ul>
 </div>
 </div>
 </div>
+</div>
 <div id="postamble" class="status">
 <p class="author">Author: Am Laher</p>
-<p class="date">Created: 2018-05-14 Mon 20:47</p>
+<p class="date">Created: 2018-05-15 Tue 07:22</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
