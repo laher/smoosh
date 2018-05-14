@@ -12,7 +12,7 @@ Please read the book. It's amazingly clear, and good fun.
 
 The language itself is amazing because it's written entirely using Go's standard library, it's easy to understand and yet it has some advanced language features (e.g. closures). Note that it's still a toy though - e.g. weak error-handling and some fundamental features are missing.
 
-Note that it's not necessary to be an expert on compilers to enjoy this book. I've never studied compilers, I enjoy learning-by-doing, and I believe that this learning goal is acheivable with good resources. That's kind of the point of this talk.
+It's not necessary to be an expert on compilers to enjoy this book. I've never studied compilers, I enjoy learning-by-doing, and I believe that this learning goal is acheivable with good resources. That's kind of the point of this talk.
 
 The book itself is copyrighted _but_ the code is MIT licensed, so I'm going to base my talk on the Monkey code and my changes to it.
 
