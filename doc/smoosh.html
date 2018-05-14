@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>Smoosh</title>
+<!-- 2018-05-14 Mon 20:47 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="Am Laher" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="https://www.pirilampo.org/styles/readtheorg/css/htmlize.css"/>
+<link rel="stylesheet" type="text/css" href="https://www.pirilampo.org/styles/readtheorg/css/readtheorg.css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://www.pirilampo.org/styles/lib/js/jquery.stickytableheaders.min.js"></script>
+<script type="text/javascript" src="https://www.pirilampo.org/styles/readtheorg/js/readtheorg.js"></script>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Smoosh</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Overview</a></li>
+<li><a href="#sec-2">2. What's an interpeter, what's a compiler, what's a shell?</a>
+<ul>
+<li><a href="#sec-2-1">2.1. Compiler vs interpreter</a></li>
+<li><a href="#sec-2-2">2.2. What's a shell</a></li>
+<li><a href="#sec-2-3">2.3. What's the problem?</a></li>
+<li><a href="#sec-2-4">2.4. Solution?</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">3. Our Interpreter: flow diagram</a>
+<ul>
+<li><a href="#sec-3-1">3.1. Packages</a></li>
+</ul>
+</li>
+<li><a href="#sec-4">4. Go compiler</a></li>
+<li><a href="#sec-5">5. Phases of the interpreter</a>
+<ul>
+<li><a href="#sec-5-1">5.1. Tokenizing</a></li>
+<li><a href="#sec-5-2">5.2. Parsing</a></li>
+<li><a href="#sec-5-3">5.3. Evaluation</a></li>
+<li><a href="#sec-5-4">5.4. Runner</a></li>
+</ul>
+</li>
+<li><a href="#sec-6">6. Code samples</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Overview</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Monkey is the language used in a book called 'Writing an interpreter in Go'.
+</p>
+
+<p>
+Please read the book. It's amazingly clear, and good fun.
+</p>
+
+<p>
+The language itself is amazing because it's written entirely using Go's standard library, it's easy to understand and yet it has some advanced language features (e.g. closures). Note that it's still a toy though - e.g. weak error-handling and some fundamental features are missing.
+</p>
+
+<p>
+Note that it's not necessary to be an expert on compilers to enjoy this book. I've never studied compilers, I enjoy learning-by-doing, and I believe that this learning goal is acheivable with good resources. That's kind of the point of this talk.
+</p>
+
+<p>
+The book itself is copyrighted <span class="underline">but</span> the code is MIT licensed, so I'm going to base my talk on the Monkey code and my changes to it.
+</p>
+
+<ul class="org-ul">
+<li>I'll talk about the high-level building blocks of an interpreter.
+</li>
+<li>I'll try to explain what problem Smoosh is trying to solve.
+</li>
+<li>Review some Monkey, and various Smoosh changes, to help illustrate the different parts of the system.
+</li>
+<li>Along the way I'll try to show what Go gives us to help make this all kinda easy.
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> What's an interpeter, what's a compiler, what's a shell?</h2>
+<div class="outline-text-2" id="text-2">
+</div><div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1"><span class="section-number-3">2.1</span> Compiler vs interpreter</h3>
+<div class="outline-text-3" id="text-2-1">
+<ul class="org-ul">
+<li>An interpreter directly executes instructions rather than compiling them to machine code in advance.
+</li>
+<li>Some platforms offer an interpreter AND a compiler - the difference is a bit blurry
+</li>
+<li>Several varieties of interpreter. We'll just look at the style used in Monkey
+</li>
+<li>Monkey executes precompiled code using an intermediate representation called an AST - ASTs are more often used in Compiled languages, e.g. Go itself
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2"><span class="section-number-3">2.2</span> What's a shell</h3>
+<div class="outline-text-3" id="text-2-2">
+<ul class="org-ul">
+<li>Shells are varied and broad in scope
+</li>
+<li>For this talk, let's define a shell as:
+<ul class="org-ul">
+<li>A shell is fundamentally an interpeter which is convenient for chaining executables together in a pipeline
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-2-3" class="outline-3">
+<h3 id="sec-2-3"><span class="section-number-3">2.3</span> What's the problem?</h3>
+<div class="outline-text-3" id="text-2-3">
+<ul class="org-ul">
+<li>Programming languages are great for defining business logic, but a little inconvenient as a pipeline for shell-like pipelines
+</li>
+<li>Shells can be awkward for defining business logic. If statements are tricky, functions are limited, data types are limited
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-2-4" class="outline-3">
+<h3 id="sec-2-4"><span class="section-number-3">2.4</span> Solution?</h3>
+<div class="outline-text-3" id="text-2-4">
+<ul class="org-ul">
+<li>Smoosh is an early-stage prototype for a programmer's shell
+</li>
+<li>Attempting to make a language which is convenient for writing shell scripts (piping commands together) and also programming
+</li>
+<li>More focused on shell scripts than an interactive shell, but still provides an interactive REPL
+</li>
+<li>A bit like Go:
+<ul class="org-ul">
+<li>Easy to read
+</li>
+<li>Small and easy to grok
+</li>
+<li>Type checking w type inference
+</li>
+<li>gofmt for consistency
+</li>
+<li>Closures and functions
+</li>
+<li>Rich standard library
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Our Interpreter: flow diagram</h2>
+<div class="outline-text-2" id="text-3">
+<div class="org-src-container">
+
+<pre class="src src-dot">digraph Smoosh {
+    rankdir="LR";
+    node[shape=rectangle];
+    edge[weight=2];
+    Lexer[shape=cds];
+    Parser[shape=cds];
+    Evaluation[shape=cds];
+    REPL[shape=cds];
+    subgraph cluster1 {
+       label="Phases"
+       Lexer -&gt; Parser;
+       Parser -&gt; Evaluation;
+       Evaluation -&gt; REPL;
+    }
+    Source[shape=cylinder];
+    Tokens[shape=cylinder];
+    AST[shape=cylinder];
+    Object[shape=cylinder];
+    subgraph cluster2 {
+       label="Representations"
+       Source -&gt; Tokens [label=lexing];
+       Source -&gt;Lexer [style=dashed];
+       Tokens-&gt;AST [ label=parsing ];
+       Lexer -&gt;Tokens [style=dashed];
+       Tokens -&gt; Parser [style=dashed];
+       Parser -&gt; AST [style=dashed];
+       AST-&gt;Object [ label=evaluation ];
+    }
+    edge[weight=1];
+}
+</pre>
+</div>
+</div>
+
+<div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1"><span class="section-number-3">3.1</span> Packages</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+This diagram generated by 'godepgraph' shows the simplicity of the Monkey/Smoosh interpreter
+</p>
+
+
+<div class="figure">
+<p><img src="smooshpkgs.svg" alt="smooshpkgs.svg" />
+</p>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> Go compiler</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+Monkey is similar to the Go compiler up to a point.
+</p>
+<ul class="org-ul">
+<li>The Go compiler first tokenizes code
+</li>
+<li>The Go compiler is written in Go too!
+</li>
+<li>The Go compiler constructs an AST.
+</li>
+<li>BUT, the go compiler generates machine code, it has a formal grammar (goyacc), it uses an intermediate form called SSA, and runs various optimisations.
+</li>
+<li><a href="https://github.com/golang/go/blob/master/src/cmd/compile/README.md">https://github.com/golang/go/blob/master/src/cmd/compile/README.md</a>
+</li>
+<li>old compiler (gccgo) <img src="https://talks.golang.org/2015/keeping-up/gccgo_structure.png" alt="gccgo_structure.png" />
+</li>
+<li>AST: <a href="https://arslan.io/2017/09/14/the-ultimate-guide-to-writing-a-go-tool/">https://arslan.io/2017/09/14/the-ultimate-guide-to-writing-a-go-tool/</a>
+</li>
+<li>SSA: <a href="https://about.sourcegraph.com/go/generating-better-machine-code-with-ssa/">https://about.sourcegraph.com/go/generating-better-machine-code-with-ssa/</a>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> Phases of the interpreter</h2>
+<div class="outline-text-2" id="text-5">
+</div><div id="outline-container-sec-5-1" class="outline-3">
+<h3 id="sec-5-1"><span class="section-number-3">5.1</span> Tokenizing</h3>
+<div class="outline-text-3" id="text-5-1">
+<ul class="org-ul">
+<li>'<a href="https://en.wikipedia.org/wiki/Lexical_analysis">Lexical analysis</a>' (lexing) / Tokenizing is the first stage of modern compiler processing.
+</li>
+<li>Typically you pass through the source once.
+</li>
+<li>the result is an ordered list of 'tokens' without any structure.
+</li>
+<li>e.g. it doesn't verify that an 'if &#x2026; {' has a matching '}'.
+</li>
+<li>See <a href="https://github.com/laher/smoosh/blob/master/token/token.go">token.go</a> and <a href="https://github.com/laher/smoosh/blob/master/lexer/lexer.go">lexer.go</a>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-5-2" class="outline-3">
+<h3 id="sec-5-2"><span class="section-number-3">5.2</span> Parsing</h3>
+<div class="outline-text-3" id="text-5-2">
+<ul class="org-ul">
+<li><a href="https://en.wikipedia.org/wiki/Parsing#Computer_languages">Parsing</a> is the component which defines a structured representation of the code.
+</li>
+<li>Monkey represents structure as an <a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree">Abstract Syntax Tree</a>
+</li>
+<li>The strategy used is called a <a href="https://en.wikipedia.org/wiki/Recursive_descent_parser">Recursive Descent Parser</a>, specifically a <a href="https://en.wikipedia.org/wiki/Pratt_parser">Pratt Parser</a>.
+</li>
+<li>Parsers are often automatically generated from declarative markup, using a 'parser generator' - see yacc, bison, antlr, goyacc
+</li>
+<li>Parser generators are really useful for completeness, correctness, and treating edge cases, but you don't learn as much. Therefore -&gt; we code this parser manually.
+</li>
+<li>AST: hierarchy is defined as infix and postfix expressions
+</li>
+<li>See <a href="https://github.com/laher/smoosh/blob/master/ast/ast.go">ast.go</a>and <a href="https://github.com/laher/smoosh/blob/master/parser/parser.go">parser.go</a>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-5-3" class="outline-3">
+<h3 id="sec-5-3"><span class="section-number-3">5.3</span> Evaluation</h3>
+<div class="outline-text-3" id="text-5-3">
+<ul class="org-ul">
+<li>Processes AST statements and expressions
+</li>
+<li>Monkey/Smoosh stores state in 'Environment' maps
+</li>
+<li>Executes precompiled code
+</li>
+<li>Harnesses Go's garbage collector
+</li>
+<li>See <a href="https://github.com/laher/smoosh/blob/master/evaluator/evaluator.go">evaluator.go</a>, <a href="https://github.com/laher/smoosh/blob/master/evaluator/builtins.go">builtins.go</a>
+</li>
+<li>For runtime state representation, see <a href="https://github.com/laher/smoosh/blob/master/object/object.go">object.go</a> and <a href="https://github.com/laher/smoosh/blob/master/object/environment.go">environment.go</a>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-5-4" class="outline-3">
+<h3 id="sec-5-4"><span class="section-number-3">5.4</span> Runner</h3>
+<div class="outline-text-3" id="text-5-4">
+<ul class="org-ul">
+<li>Monkey offers a REPL for each phase during each chapter.
+</li>
+<li>I've combined them so you can observe the output of each phase using different options
+</li>
+<li>I also added a second mode of operation - a 'file runner'
+</li>
+<li>See [[
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6"><span class="section-number-2">6</span> Code samples</h2>
+<div class="outline-text-2" id="text-6">
+<ul class="org-ul">
+<li>Adding a new token - E.g. one-line comments
+</li>
+<li>Add a builtin function, e.g. `cd`
+</li>
+<li>Adding type-checking - var-&gt;let, check existing Objects during eval
+</li>
+<li>Adding some syntax - 'for-range loops'
+</li>
+<li>Adding 'piping'
+</li>
+<li>Building a standard library akin to Go's stdlib
+</li>
+<li>Formatting code
+</li>
+<li>Unicode support
+</li>
+<li>REPL flavours
+</li>
+<li>Integration testing
+≠
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Am Laher</p>
+<p class="date">Created: 2018-05-14 Mon 20:47</p>
+<p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
