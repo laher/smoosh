@@ -237,15 +237,14 @@ func TestParsingInfixExpressions(t *testing.T) {
 	}
 }
 
-// TODO: re-enable this test after the talk
-func TODOReEnableTestOperatorPrecedenceParsing(t *testing.T) {
+func TestOperatorPrecedenceParsing(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected string
 	}{
 		{
 			"-a * b",
-			"(-a) * b",
+			"((-a) * b)",
 		},
 		{
 			"!-a",
@@ -253,23 +252,23 @@ func TODOReEnableTestOperatorPrecedenceParsing(t *testing.T) {
 		},
 		{
 			"a + b + c",
-			"a + b + c",
+			"((a + b) + c)",
 		},
 		{
 			"a + b - c",
-			"a + b - c",
+			"((a + b) - c)",
 		},
 		{
 			"a * b * c",
-			"a * b * c",
+			"((a * b) * c)",
 		},
 		{
 			"a * b / c",
-			"a * b / c",
+			"((a * b) / c)",
 		},
 		{
 			"a + b / c",
-			"a + (b / c)",
+			"(a + (b / c))",
 		},
 		{
 			"a + b * c + d / e - f",
@@ -277,15 +276,15 @@ func TODOReEnableTestOperatorPrecedenceParsing(t *testing.T) {
 		},
 		{
 			"3 + 4; -5 * 5",
-			"3 + 4)((-5) * 5",
+			"(3 + 4)((-5) * 5)",
 		},
 		{
 			"5 > 4 == 3 < 4",
-			"(5 > 4) == (3 < 4)",
+			"((5 > 4) == (3 < 4))",
 		},
 		{
 			"5 < 4 != 3 > 4",
-			"(5 < 4) != (3 > 4)",
+			"((5 < 4) != (3 > 4))",
 		},
 		{
 			"3 + 4 * 5 == 3 * 1 + 4 * 5",
@@ -301,11 +300,11 @@ func TODOReEnableTestOperatorPrecedenceParsing(t *testing.T) {
 		},
 		{
 			"3 > 5 == false",
-			"(3 > 5) == false",
+			"((3 > 5) == false)",
 		},
 		{
 			"3 < 5 == true",
-			"(3 < 5) == true",
+			"((3 < 5) == true)",
 		},
 		{
 			"1 + (2 + 3) + 4",
@@ -645,7 +644,7 @@ func TestCallExpressionParameterParsing(t *testing.T) {
 		{
 			input:         "add(1, 2 * 3, 4 + 5);",
 			expectedIdent: "add",
-			expectedArgs:  []string{"1", "2 * 3", "4 + 5"},
+			expectedArgs:  []string{"1", "(2 * 3)", "(4 + 5)"},
 		},
 	}
 
