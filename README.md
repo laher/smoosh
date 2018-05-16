@@ -2,19 +2,19 @@
 
 Smoosh is an experimental shell language written in Go. 
 
-Smoosh is intended as primarily a programming language with shell features 'bolted on' (or _smooshed on top_).
+Smoosh is intended as primarily a programming language with shell-like features 'bolted on' (or _smooshed on top_).
 
 _Smoosh is based on the sample 'monkey' language as defined in the book 'Writing an Interpreter in Go' by Thorsten Ball (Smoosh retains Monkey's MIT license)._
 
+_NOTE: Smoosh is cross-plaform. For portability reasons, smoosh doesn't actually use linux pipes. It uses the io.Readers/io.Writers supplied by `exec.Cmd`, and pipes data through these. Performance and memory consumption seem acceptable so far._
+
 ## A simple smoosh script
 
-Smoosh will look a bit like this … (this isn't actually implemented yet)
+Smoosh will look a bit like this … (this isn't completely implemented yet)
 
 ```
-   var x = $("ls", "-1")
-   echo x | $("grep", "1") \
-          | >("out.log") \
-          |2 $("tee", "err.log")
+   var x = $(`ls -1`)
+   echo x | $(`grep 1`) | w("out.log", "err.log")
 ```
 
 ## Planned features
@@ -25,6 +25,7 @@ Smoosh will look a bit like this … (this isn't actually implemented yet)
   - [X] take in a filename(s) for processing as a script
   - [X] support/ignore a hashbang at the top of a file
   - [X] support for piping external commands …
+  - [X] Backticks for succinctness
   - [ ] support for exit codes, signals
   - [ ] support for interactive commands
   - [ ] history
