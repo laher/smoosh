@@ -10,6 +10,7 @@ const (
 	IDENT  = "IDENT"  // add, foobar, x, y, ...
 	INT    = "INT"    // 1343456
 	STRING = "STRING" // "foobar"
+	BACKY  = "BACKY"  // `ls -l`
 
 	// Operators
 	ASSIGN   = "="
@@ -52,6 +53,8 @@ const (
 	PIPE = "|"
 
 	HASH = "#"
+
+	BACKTICK = "`"
 )
 
 type Token struct {

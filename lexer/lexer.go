@@ -91,6 +91,9 @@ func (l *Lexer) NextToken() token.Token {
 	case '#':
 		tok = newToken(token.HASH, l.ru, l.line)
 		tok.Literal = l.readLine()
+	case '`':
+		tok.Type = token.BACKY
+		tok.Literal = l.readUntil('`')
 	case 0, utf8.RuneError:
 		tok.Literal = ""
 		tok.Type = token.EOF
@@ -142,10 +145,14 @@ func (l *Lexer) readNumber() string {
 }
 
 func (l *Lexer) readString() string {
+	return l.readUntil('"')
+}
+
+func (l *Lexer) readUntil(ru rune) string {
 	position := l.position + 1
 	for {
 		l.readRune()
-		if l.ru == '"' || l.ru == utf8.RuneError || l.ru == 0 {
+		if l.ru == ru || l.ru == utf8.RuneError || l.ru == 0 {
 			break
 		}
 	}

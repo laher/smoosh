@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 
@@ -197,10 +198,7 @@ var builtins = map[string]*object.Builtin{
 			inputs := []string{}
 			envV := env.Export()
 			for i, arg := range args {
-				if arg.Type() != object.STRING_OBJ {
-					return newError("argument to `$` must be STRING, got %s",
-						args[i].Type())
-				}
+				log.Printf("$ arg[%d]: %T: %v", i, arg, arg)
 				switch argT := arg.(type) {
 				case *object.String:
 					input, err := interpolate(envV, argT.Value)
@@ -209,6 +207,20 @@ var builtins = map[string]*object.Builtin{
 							err)
 					}
 					inputs = append(inputs, input)
+				case *object.BacktickExpression:
+					strings, isValid := argT.Parse()
+					if !isValid {
+						return newError("cannot parse backtick expression",
+							nil)
+					}
+					for _, s := range strings {
+						input, err := interpolate(envV, s.Value)
+						if err != nil {
+							return newError("cannot parse arg for interpolation - %s",
+								err)
+						}
+						inputs = append(inputs, input)
+					}
 				default:
 					return newError("argument to `$` not supported, got %s",
 						argT.Type())

@@ -384,6 +384,15 @@ func (sl *StringLiteral) expressionNode()      {}
 func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Literal }
 func (sl *StringLiteral) String() string       { return "\"" + sl.Token.Literal + "\"" }
 
+type BacktickLiteral struct {
+	Token token.Token
+	Value string
+}
+
+func (sl *BacktickLiteral) expressionNode()      {}
+func (sl *BacktickLiteral) TokenLiteral() string { return sl.Token.Literal }
+func (sl *BacktickLiteral) String() string       { return "`" + sl.Token.Literal + "`" }
+
 type CommentLiteral struct {
 	Token token.Token
 	Value string

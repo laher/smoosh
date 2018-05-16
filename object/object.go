@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"strings"
+	"unicode"
 
 	"github.com/laher/smoosh/ast"
 )
@@ -30,6 +31,8 @@ const (
 	HASH_OBJ  = "HASH"
 
 	PIPES_OBJ = "PIPES"
+
+	BACKTICK_OBJ = "BACKTICK"
 )
 
 type HashKey struct {
@@ -129,6 +132,45 @@ func (s *String) HashKey() HashKey {
 	h.Write([]byte(s.Value))
 
 	return HashKey{Type: s.Type(), Value: h.Sum64()}
+}
+
+type BacktickExpression struct {
+	Value string
+}
+
+func (s *BacktickExpression) Type() ObjectType { return BACKTICK_OBJ }
+func (s *BacktickExpression) Inspect() string  { return s.Value }
+func (s *BacktickExpression) HashKey() HashKey {
+	h := fnv.New64a()
+	h.Write([]byte(s.Value))
+
+	return HashKey{Type: s.Type(), Value: h.Sum64()}
+}
+
+func (bt *BacktickExpression) Parse() ([]String, bool) {
+	lastQuote := rune(0)
+	f := func(c rune) bool {
+		switch {
+		case c == lastQuote:
+			lastQuote = rune(0)
+			return false
+		case lastQuote != rune(0):
+			return false
+		case unicode.In(c, unicode.Quotation_Mark):
+			lastQuote = c
+			return false
+		default:
+			return unicode.IsSpace(c)
+
+		}
+	}
+	m := strings.FieldsFunc(bt.Value, f)
+	ret := []String{}
+	for _, s := range m {
+		ret = append(ret, String{Value: s})
+	}
+	//fmt.Printf("%#v", m)
+	return ret, true
 }
 
 type Builtin struct {
