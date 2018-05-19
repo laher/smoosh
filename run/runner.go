@@ -12,6 +12,7 @@ import (
 	"github.com/laher/smoosh/lexer"
 	"github.com/laher/smoosh/object"
 	"github.com/laher/smoosh/parser"
+	_ "github.com/laher/smoosh/stdlib" //stdlib should always be loaded along with the evaluator ... how to do packages ... ?
 	"github.com/laher/smoosh/token"
 )
 

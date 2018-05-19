@@ -5,6 +5,7 @@ import (
 
 	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
+	"github.com/laher/smoosh/stdlib"
 )
 
 var (
@@ -382,7 +383,7 @@ func evalIdentifier(
 		return val
 	}
 
-	if builtin, ok := builtins[node.Value]; ok {
+	if builtin, ok := stdlib.GetFn(node.Value); ok {
 		return builtin
 	}
 
