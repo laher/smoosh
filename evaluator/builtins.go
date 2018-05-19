@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
+	"strings"
+	"unicode"
 
 	"github.com/alecthomas/template"
 	"github.com/laher/smoosh/ast"
@@ -197,24 +198,12 @@ var builtins = map[string]*object.Builtin{
 			}
 			inputs := []string{}
 			envV := env.Export()
-			for i, arg := range args {
-				log.Printf("$ arg[%d]: %T: %v", i, arg, arg)
+			for _, arg := range args {
 				switch argT := arg.(type) {
 				case *object.String:
-					input, err := interpolate(envV, argT.Value)
-					if err != nil {
-						return newError("cannot parse arg for interpolation - %s",
-							err)
-					}
-					inputs = append(inputs, input)
-				case *object.BacktickExpression:
-					strings, isValid := argT.Parse()
-					if !isValid {
-						return newError("cannot parse backtick expression",
-							nil)
-					}
+					strings := parseArgv(argT.Value)
 					for _, s := range strings {
-						input, err := interpolate(envV, s.Value)
+						input, err := interpolate(envV, s)
 						if err != nil {
 							return newError("cannot parse arg for interpolation - %s",
 								err)
@@ -363,6 +352,26 @@ var builtins = map[string]*object.Builtin{
 	},
 }
 
+func parseArgv(p string) []string {
+	lastQuote := rune(0)
+	f := func(c rune) bool {
+		switch {
+		case c == lastQuote:
+			lastQuote = rune(0)
+			return false
+		case lastQuote != rune(0):
+			return false
+		case unicode.In(c, unicode.Quotation_Mark):
+			lastQuote = c
+			return false
+		default:
+			return unicode.IsSpace(c)
+
+		}
+	}
+	m := strings.FieldsFunc(p, f)
+	return m
+}
 func interpolateArgsAsStrings(env *object.Environment, args []object.Object) ([]string, error) {
 	inputs := []string{}
 	envV := env.Export()
