@@ -27,6 +27,7 @@ func isPipedInput(in io.Reader) bool {
 func (r *Runner) Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
 	env := object.NewEnvironment()
+	macroEnv := object.NewEnvironment()
 	user, err := user.Current()
 	if err != nil {
 		panic(err)
@@ -36,7 +37,7 @@ func (r *Runner) Start(in io.Reader, out io.Writer) {
 		if err != nil {
 			panic(err)
 		}
-		err = r.runData(string(all), out, env)
+		err = r.runData(string(all), out, env, macroEnv)
 		if err != nil {
 			panic(err)
 		}
@@ -55,7 +56,7 @@ func (r *Runner) Start(in io.Reader, out io.Writer) {
 		}
 
 		line := scanner.Text()
-		err = r.runData(line, out, env)
+		err = r.runData(line, out, env, macroEnv)
 		if err != nil {
 			panic(err)
 		}

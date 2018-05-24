@@ -46,10 +46,11 @@ func (r *Runner) Run(rdr io.Reader, out io.Writer) error {
 		return fmt.Errorf("could not read: %v", err)
 	}
 	env := object.NewEnvironment()
-	return r.runData(string(data), out, env)
+	macroEnv := object.NewEnvironment()
+	return r.runData(string(data), out, env, macroEnv)
 }
 
-func (r *Runner) runData(data string, out io.Writer, env *object.Environment) error {
+func (r *Runner) runData(data string, out io.Writer, env, macroEnv *object.Environment) error {
 	l := lexer.New(data)
 	if r.Parse {
 		p := parser.New(l)
@@ -57,8 +58,11 @@ func (r *Runner) runData(data string, out io.Writer, env *object.Environment) er
 		if len(p.Errors()) > 0 {
 			return errors.New(p.Errors()[0])
 		}
+
 		if r.Evaluate {
-			result := evaluator.Eval(program, env)
+			evaluator.DefineMacros(program, macroEnv)
+			expanded := evaluator.ExpandMacros(program, macroEnv)
+			result := evaluator.Eval(expanded, env)
 			if result == nil {
 				return nil
 			}
@@ -85,6 +89,9 @@ func (r *Runner) runData(data string, out io.Writer, env *object.Environment) er
 
 			_, err := io.WriteString(out, result.Inspect()+"\n")
 			return err
+		} else {
+			// TODO detect type-checking errors
+			// TODO detact macro errors
 		}
 		if r.Format {
 			_, err := io.WriteString(out, program.String())

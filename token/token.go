@@ -55,6 +55,8 @@ const (
 	HASH = "#"
 
 	BACKTICK = "`"
+
+	MACRO = "MACRO"
 )
 
 type Token struct {
@@ -73,6 +75,7 @@ var keywords = map[string]TokenType{
 	"return": RETURN,
 	"for":    FOR,
 	"range":  RANGE,
+	"macro":  MACRO,
 }
 
 func LookupIdent(ident string) TokenType {
