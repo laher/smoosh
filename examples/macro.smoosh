@@ -1,0 +1,4 @@
+var minusX = macro(a, b) { quote(unquote(b) - unquote(a)); }
+var z = minusX(2 + 2, 10 - 5)
+z
+

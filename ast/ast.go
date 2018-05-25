@@ -44,6 +44,7 @@ func (p *Program) String() string {
 	for _, s := range p.Statements {
 		out.WriteString(s.String())
 	}
+	out.WriteString("\n")
 
 	return out.String()
 }
@@ -60,7 +61,9 @@ func (ls *AssignStatement) TokenLiteral() string { return ls.Token.Literal }
 func (ls *AssignStatement) String() string {
 	var out bytes.Buffer
 
-	out.WriteString(ls.TokenLiteral() + " ")
+	if ls.Token.Type == token.VAR {
+		out.WriteString("var ")
+	}
 	out.WriteString(ls.Name.String())
 	out.WriteString(" = ")
 
@@ -343,9 +346,9 @@ func (fl *FunctionLiteral) String() string {
 	out.WriteString(fl.TokenLiteral())
 	out.WriteString("(")
 	out.WriteString(strings.Join(params, ", "))
-	out.WriteString(") ")
+	out.WriteString(") {\n")
 	out.WriteString(fl.Body.String())
-	out.WriteString("\n")
+	out.WriteString("}\n")
 	return out.String()
 }
 
@@ -486,7 +489,9 @@ func (ml *MacroLiteral) String() string {
 	out.WriteString("(")
 	out.WriteString(strings.Join(params, ", "))
 	out.WriteString(") ")
+	out.WriteString("{\n")
 	out.WriteString(ml.Body.String())
+	out.WriteString("}\n")
 
 	return out.String()
 }

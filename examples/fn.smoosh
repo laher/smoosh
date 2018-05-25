@@ -1,0 +1,7 @@
+#!/usr/bin/smoosh
+
+var x = fn() {
+  echo ("Fn")
+};
+
+x()
