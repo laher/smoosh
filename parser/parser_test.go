@@ -359,7 +359,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		checkParserErrors(t, p)
 
 		actual := program.String()
-		if actual != tt.expected {
+		if actual != tt.expected+"\n" {
 			t.Errorf("expected=%q, got=%q", tt.expected, actual)
 		}
 	}

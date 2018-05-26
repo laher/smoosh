@@ -3,6 +3,8 @@ package stdlib
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 
 	"github.com/alecthomas/template"
@@ -82,6 +84,7 @@ func exit(env *object.Environment, in, out *ast.Pipes, args ...object.Object) ob
 	return Null
 
 }
+
 func echo(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 	if len(args) < 1 || len(args) > 2 {
 		return object.NewError("wrong number of arguments. got=%d, want=1 or 2",
@@ -91,17 +94,14 @@ func echo(env *object.Environment, in, out *ast.Pipes, args ...object.Object) ob
 	if err != nil {
 		return object.NewError(err.Error())
 	}
-	f := os.Stdout
-	if out != nil {
-		// ?
-	}
+	o, _ := getWriters(out)
 	for i, w := range inputs {
 		s := " "
 		if len(inputs) == i+1 {
 			s = "\n"
 		}
 
-		fmt.Fprintf(f, "%s%s", w, s)
+		fmt.Fprintf(o, "%s%s", w, s)
 	}
 	return Null
 }
@@ -110,10 +110,6 @@ func InterpolateArgsAsStrings(env *object.Environment, args []object.Object) ([]
 	inputs := []string{}
 	envV := env.Export()
 	for i, arg := range args {
-		if arg.Type() != object.STRING_OBJ {
-			return nil, fmt.Errorf("argument must be STRING, got %s",
-				args[i].Type())
-		}
 		switch argT := arg.(type) {
 		case *object.String:
 			input, err := Interpolate(envV, argT.Value)
@@ -122,9 +118,15 @@ func InterpolateArgsAsStrings(env *object.Environment, args []object.Object) ([]
 					err)
 			}
 			inputs = append(inputs, input)
+		case *object.Integer:
+			input := fmt.Sprintf("%d", argT.Value)
+			inputs = append(inputs, input)
+		case *object.Null:
+			inputs = append(inputs, "<NULL>")
+
 		default:
-			return nil, fmt.Errorf("argument not supported, got %s",
-				argT.Type())
+			return nil, fmt.Errorf("argument %d not supported, got %s",
+				i, argT.Type())
 		}
 	}
 	return inputs, nil
@@ -142,4 +144,28 @@ func Interpolate(envV map[string]interface{}, value string) (string, error) {
 		return "", err
 	}
 	return buf.String(), nil
+}
+
+func getReader(in *ast.Pipes) io.ReadCloser {
+	if in != nil {
+		return in.Out
+	}
+	return nil
+}
+
+func getWriters(out *ast.Pipes) (io.Writer, io.Writer) {
+	var (
+		stdout io.Writer = os.Stdout
+		stderr io.Writer = os.Stderr
+	)
+	if out != nil {
+		r, w := io.Pipe()
+		stdout = w
+		out.Out = ioutil.NopCloser(r) // this will be closed by the evaluator
+
+		r, w = io.Pipe()
+		stderr = w
+		out.Err = ioutil.NopCloser(r) // this will be closed by the evaluator
+	}
+	return stdout, stderr
 }
