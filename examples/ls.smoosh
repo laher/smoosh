@@ -1,0 +1,11 @@
+
+var lsL = macro(a, b) {
+  var l =1;
+  #var bl = unquote(b);
+  #quote(bl);
+  quote(unquote(a) + unquote(b));
+}
+
+var x=ls(".")
+echo(x)
+#x(".")
