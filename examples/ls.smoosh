@@ -6,6 +6,6 @@ var lsL = macro(a, b) {
   quote(unquote(a) + unquote(b));
 }
 
-var x=ls(".")
+var x=ls(l, ".")
 echo(x)
 #x(".")

@@ -17,18 +17,19 @@ import (
 )
 
 func init() {
-	RegisterFn("ls", ls)
-	opts = map[int64]string{
+	RegisterBuiltin("ls", &object.Builtin{
+		Fn:    ls,
+		Flags: opts,
+	})
 
-		0: "l",
-		1: "r",
-		2: "h",
-		3: "a",
-		4: "1",
-	}
 }
 
-var opts map[int64]string
+var opts = []object.Flag{
+	object.Flag{Name: "l"},
+	object.Flag{Name: "r"},
+	object.Flag{Name: "a"},
+	object.Flag{Name: "h"},
+}
 
 // Ls represents and performs a `ls` invocation
 type Ls struct {
@@ -52,8 +53,8 @@ func ls(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obje
 	}
 	for i := range args {
 		switch arg := args[i].(type) {
-		case *object.Integer:
-			switch opts[arg.Value] {
+		case *object.Flag:
+			switch arg.Name {
 			case "l":
 				ls.LongList = true
 			case "a":

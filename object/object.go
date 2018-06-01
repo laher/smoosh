@@ -25,6 +25,7 @@ const (
 
 	FUNCTION_OBJ = "FUNCTION"
 	BUILTIN_OBJ  = "BUILTIN"
+	FLAG_OBJ     = "FLAG"
 
 	ARRAY_OBJ = "ARRAY"
 	HASH_OBJ  = "HASH"
@@ -154,11 +155,25 @@ func (s *BacktickExpression) HashKey() HashKey {
 }
 
 type Builtin struct {
-	Fn BuiltinFunction
+	Fn    BuiltinFunction
+	Flags []Flag
 }
 
 func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }
 func (b *Builtin) Inspect() string  { return "builtin function" }
+
+type Flag struct {
+	Name     string
+	FlagType int
+	Object   Object
+}
+
+func (b *Flag) Type() ObjectType { return FLAG_OBJ }
+func (b *Flag) Inspect() string  { return "flag" }
+
+const (
+	Bool = 0
+)
 
 type Array struct {
 	Elements []Object

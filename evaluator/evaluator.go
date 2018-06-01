@@ -99,8 +99,17 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if isError(function) {
 			return function
 		}
-
-		args := evalExpressions(node.Arguments, env)
+		enclosedEnv := object.NewEnclosedEnvironment(env)
+		// apply extra flags during argument parsing
+		switch fn := function.(type) {
+		case *object.Builtin:
+			if len(fn.Flags) > 0 {
+				for i := range fn.Flags {
+					enclosedEnv.Set(fn.Flags[i].Name, &fn.Flags[i])
+				}
+			}
+		}
+		args := evalExpressions(node.Arguments, enclosedEnv)
 		if len(args) == 1 && isError(args[0]) {
 			return args[0]
 		}

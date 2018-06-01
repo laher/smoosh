@@ -7,14 +7,18 @@ import (
 	"github.com/laher/smoosh/object"
 )
 
-// RegisterFn registers a 'builtin function'
-func RegisterFn(name string, def object.BuiltinFunction) {
+func RegisterBuiltin(name string, def *object.Builtin) {
 	if _, ok := builtins[name]; ok {
 		panic("fn '" + name + "' already defined")
 	}
-	builtins[name] = &object.Builtin{
+	builtins[name] = def
+}
+
+// RegisterFn registers a 'builtin function'
+func RegisterFn(name string, def object.BuiltinFunction) {
+	RegisterBuiltin(name, &object.Builtin{
 		Fn: def,
-	}
+	})
 }
 
 //GetFun returns function if defined
