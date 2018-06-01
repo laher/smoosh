@@ -65,6 +65,8 @@ func ls(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obje
 				ls.OnePerLine = true
 			case "r":
 				ls.Recursive = true
+			default:
+				return object.NewError("flag %s not supported", arg.Name)
 			}
 		case *object.String:
 			d, err := Interpolate(env.Export(), arg.Value)

@@ -1,0 +1,7 @@
+
+#ls(l, ".")
+#echo(".")|w("x.txt")
+#ls(l, ".")
+$("touch x.tmp")
+mv("x.tmp", "y.tmp")
+
