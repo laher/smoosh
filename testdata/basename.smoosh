@@ -1,0 +1,4 @@
+var x = basename("x/y")
+if (x != "y") {
+  exit(1)
+}
