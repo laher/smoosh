@@ -70,10 +70,9 @@ func moveFile(src, dest string) error {
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return err
-		} else {
-			//doesnt exist
-			destFull = dest
 		}
+		//doesnt exist
+		destFull = dest
 	} else {
 		if dinf.IsDir() {
 			//copy file name
