@@ -1,0 +1,5 @@
+
+$("touch z.tmp")
+r("z.tmp")|w("x.tmp")
+
+$("ls .")|w("u.tmp")

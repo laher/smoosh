@@ -1,7 +1,6 @@
 package stdlib
 
 import (
-	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -69,79 +68,6 @@ func dollar(env *object.Environment, in, out *ast.Pipes, args ...object.Object) 
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		return object.NewError(err.Error())
-	}
-	return Null
-}
-func write(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
-	if len(args) < 1 || len(args) > 2 {
-		return object.NewError("wrong number of arguments. got=%d, want=1 or 2",
-			len(args))
-	}
-	inputs := []string{}
-	envV := env.Export()
-	for i, arg := range args {
-		if arg.Type() != object.STRING_OBJ {
-			return object.NewError("argument to `$` must be STRING, got %s",
-				args[i].Type())
-		}
-		switch argT := arg.(type) {
-		case *object.String:
-			input, err := Interpolate(envV, argT.Value)
-			if err != nil {
-				return object.NewError("cannot parse arg for interpolation - %s",
-					err)
-			}
-			inputs = append(inputs, input)
-		default:
-			return object.NewError("argument to `$` not supported, got %s",
-				argT.Type())
-		}
-
-	}
-	if in == nil {
-		return Null
-	}
-
-	if inputs[0] != "" {
-		f, err := os.Create(inputs[0])
-		if err != nil {
-			return object.NewError(err.Error())
-		}
-		if _, err := io.Copy(f, in.Out); err != nil {
-			return object.NewError(err.Error())
-		}
-	}
-	if len(inputs) > 1 && inputs[1] != "" && in.Err != nil {
-		f, err := os.Create(inputs[1])
-		if err != nil {
-			return object.NewError(err.Error())
-		}
-		if _, err := io.Copy(f, in.Err); err != nil {
-			return object.NewError(err.Error())
-		}
-	}
-
-	return Null
-}
-func read(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
-	if len(args) < 1 || len(args) > 2 {
-		return object.NewError("wrong number of arguments. got=%d, want=1 or 2",
-			len(args))
-	}
-	inputs, err := InterpolateArgsAsStrings(env, args)
-	if err != nil {
-		return object.NewError(err.Error())
-	}
-	f, err := os.Open(inputs[0])
-	if err != nil {
-		return object.NewError(err.Error())
-	}
-	if out != nil {
-		out.Out = f
-		return Null
-	}
-	if _, err := io.Copy(os.Stdout, f); err != nil {
 		return object.NewError(err.Error())
 	}
 	return Null

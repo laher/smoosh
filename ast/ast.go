@@ -104,8 +104,8 @@ type Pipes struct {
 	Wait func() error // Wait should be idempotent to allow for resource cleanup
 }
 
-// CloseAll closes pipes if open
-func (p *Pipes) CloseAll() error {
+// WaitAndClose closes pipes if open
+func (p *Pipes) WaitAndClose() error {
 
 	if p == nil {
 		return nil

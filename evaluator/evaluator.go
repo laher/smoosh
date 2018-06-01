@@ -114,7 +114,11 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return args[0]
 		}
 		defer func() {
-			go node.In.CloseAll() // ensure cleanup always happens
+			if node.In != nil {
+				// defer guarantees this runs AFTER applyFunction.
+				// go guarantees that it doesn't block the next call
+				go node.In.WaitAndClose() // ensure cleanup always happens
+			}
 		}()
 
 		return applyFunction(function, args, node.In, node.Out, env)
