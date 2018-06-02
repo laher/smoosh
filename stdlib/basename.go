@@ -44,21 +44,20 @@ func basename(env *object.Environment, in, out *ast.Pipes, args ...object.Object
 		inputPath = myArgs[0]
 	}
 
+	base := basenameFile(inputPath, relativeTo)
 	stdout, _ := getWriters(out)
-	base := ""
-	if relativeTo != "" {
-		last := strings.LastIndex(relativeTo, inputPath)
-		base = inputPath[:last]
-		_, err := fmt.Fprintln(stdout, base)
-		if err != nil {
-			return object.NewError(err.Error())
-		}
-	} else {
-		base = path.Base(inputPath)
-		_, err := fmt.Fprintln(stdout, base)
-		if err != nil {
-			return object.NewError(err.Error())
-		}
+	_, err := fmt.Fprintln(stdout, base)
+	if err != nil {
+		return object.NewError(err.Error())
 	}
 	return &object.String{Value: base}
+}
+
+func basenameFile(inputPath, relativeTo string) string {
+	if relativeTo != "" {
+		last := strings.LastIndex(relativeTo, inputPath)
+		return inputPath[:last]
+
+	}
+	return path.Base(inputPath)
 }
