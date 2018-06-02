@@ -163,9 +163,9 @@ func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }
 func (b *Builtin) Inspect() string  { return "builtin function" }
 
 type Flag struct {
-	Name     string
-	FlagType int
-	Object   Object
+	Name      string
+	ParamType ObjectType
+	Param     Object
 }
 
 func (b *Flag) Type() ObjectType { return FLAG_OBJ }

@@ -105,7 +105,16 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		case *object.Builtin:
 			if len(fn.Flags) > 0 {
 				for i := range fn.Flags {
-					enclosedEnv.Set(fn.Flags[i].Name, &fn.Flags[i])
+					switch fn.Flags[i].ParamType {
+					case object.INTEGER_OBJ, object.STRING_OBJ:
+						enclosedEnv.Set(fn.Flags[i].Name, flagFn(&fn.Flags[i]))
+					case object.BOOLEAN_OBJ:
+						// TODO allow flags to be passed as 'false'
+						// enclosedEnv.Set(fn.Flags[i].Name, flagFn(&fn.Flags[i]))
+						enclosedEnv.Set(fn.Flags[i].Name, &fn.Flags[i])
+					default:
+						return object.NewError("Unexpected flag ParamType [%v]", fn.Flags[i].ParamType)
+					}
 				}
 			}
 		}
