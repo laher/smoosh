@@ -85,6 +85,7 @@ func ls(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obje
 	return Null
 }
 
+// Go actually runs the ls ...
 func (ls *Ls) Go(in, out *ast.Pipes) error {
 	stdout, stderr := getWriters(out)
 	tout := tabwriter.NewWriter(stdout, 4, 4, 1, ' ', 0)
