@@ -17,18 +17,17 @@ import (
 )
 
 func init() {
+	var opts = []object.Flag{
+		object.Flag{Name: "l"},
+		object.Flag{Name: "r"},
+		object.Flag{Name: "a"},
+		object.Flag{Name: "h"},
+	}
 	RegisterBuiltin("ls", &object.Builtin{
 		Fn:    ls,
 		Flags: opts,
 	})
 
-}
-
-var opts = []object.Flag{
-	object.Flag{Name: "l"},
-	object.Flag{Name: "r"},
-	object.Flag{Name: "a"},
-	object.Flag{Name: "h"},
 }
 
 // Ls represents and performs a `ls` invocation
