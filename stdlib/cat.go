@@ -65,6 +65,7 @@ func catIt(stdout io.Writer, in io.Reader, fileNames []string, showEnds, number,
 			if err != nil {
 				return err
 			}
+			defer file.Close()
 			if !showEnds && !number && !squeezeBlank {
 				_, err = io.Copy(stdout, file)
 				if err != nil {
