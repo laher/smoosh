@@ -31,16 +31,16 @@ func init() {
 // Grep represents and performs a `grep` invocation
 type Grep struct {
 	IsPerl            bool
-	IsExtended        bool
+	IsExtended        bool // TODO extended is true by default
 	IsIgnoreCase      bool
 	IsInvertMatch     bool
-	IsPrintFilename   bool
+	IsPrintFilename   bool // TODO filename is true by default
 	IsPrintLineNumber bool
 	IsRecurse         bool
-	IsQuiet           bool
-	LinesBefore       int
-	LinesAfter        int
-	LinesAround       int
+	IsQuiet           bool // TODO
+	LinesBefore       int  // TODO
+	LinesAfter        int  // TODO
+	LinesAround       int  // TODO
 
 	pattern string
 	globs   []string
@@ -48,7 +48,7 @@ type Grep struct {
 
 func grep(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 
-	grep := &Grep{IsExtended: true, IsPrintFilename: true}
+	grep := &Grep{}
 	myArgs := []string{}
 	for i := range args {
 		switch arg := args[i].(type) {
