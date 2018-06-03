@@ -63,16 +63,17 @@ func head(env *object.Environment, in, out *ast.Pipes, args ...object.Object) ob
 				args[0].Type())
 		}
 	}
-	stdout, _ := getWriters(out)
-	stdin := getReader(in)
-	err := head.do(stdout, stdin)
+
+	err := head.do(out, in)
 	if err != nil {
 		return object.NewError(err.Error())
 	}
 	return Null
 }
 
-func (head *Head) do(stdout io.Writer, stdin io.Reader) error {
+func (head *Head) do(out, in *ast.Pipes) error {
+	stdout, _ := getWriters(out)
+	stdin := getReader(in)
 	if len(head.Filenames) > 0 {
 		for _, fileName := range head.Filenames {
 			file, err := os.Open(fileName)
@@ -80,7 +81,6 @@ func (head *Head) do(stdout io.Writer, stdin io.Reader) error {
 				return err
 			}
 			defer file.Close()
-			//err = headFile(file, head, invocation.MainPipe.Out)
 			err = head.head(stdout, file)
 			if err != nil {
 				return err
@@ -100,7 +100,7 @@ func (head *Head) do(stdout io.Writer, stdin io.Reader) error {
 	return nil
 }
 
-func (head *Head) head(out io.Writer, in io.Reader) error {
+func (head *Head) head(out io.WriteCloser, in io.ReadCloser) error {
 	reader := bufio.NewReader(in)
 	lineNo := int64(1)
 	ch := '\n' //should this be an option?
@@ -115,22 +115,6 @@ func (head *Head) head(out io.Writer, in io.Reader) error {
 		//text := scanner.Text()
 		fmt.Fprintf(out, "%s", text) //, string(ch))
 		lineNo++
-	}
-	return nil
-}
-
-// deprecated (use of bufio.Scanner)
-func headFile(file io.Reader, head *Head, out io.Writer) error {
-	scanner := bufio.NewScanner(file)
-	lineNo := int64(1)
-	for scanner.Scan() && lineNo <= head.lines {
-		text := scanner.Text()
-		fmt.Fprintf(out, "%s\n", text)
-		lineNo++
-	}
-	err := scanner.Err()
-	if err != nil {
-		return err
 	}
 	return nil
 }

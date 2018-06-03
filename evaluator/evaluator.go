@@ -109,7 +109,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 					case object.INTEGER_OBJ, object.STRING_OBJ:
 						enclosedEnv.Set(fn.Flags[i].Name, flagFn(&fn.Flags[i]))
 					case object.BOOLEAN_OBJ, object.ObjectType(""):
-						// TODO allow flags to be passed as 'false'
+						// TODO maybe allow flags to be passed as 'false' (where default is true)... OR just force them to always default to false
 						// enclosedEnv.Set(fn.Flags[i].Name, flagFn(&fn.Flags[i]))
 						enclosedEnv.Set(fn.Flags[i].Name, &fn.Flags[i])
 					default:
@@ -122,14 +122,6 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if len(args) == 1 && isError(args[0]) {
 			return args[0]
 		}
-		defer func() {
-			if node.In != nil {
-				// defer guarantees this runs AFTER applyFunction.
-				// go guarantees that it doesn't block the next call
-				go node.In.WaitAndClose() // ensure cleanup always happens
-			}
-		}()
-
 		return applyFunction(function, args, node.In, node.Out, env)
 
 	case *ast.ArrayLiteral:
@@ -465,6 +457,13 @@ func evalExpressions(
 }
 
 func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, env *object.Environment) object.Object {
+	defer func() {
+		if in != nil {
+			// defer guarantees this runs AFTER applyFunction.
+			// go guarantees that it doesn't block the next call
+			go in.WaitAndClose() // ensure cleanup always happens
+		}
+	}()
 	switch fn := fn.(type) {
 
 	case *object.Function:

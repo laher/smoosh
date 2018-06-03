@@ -166,6 +166,7 @@ type Flag struct {
 	Name      string
 	ParamType ObjectType
 	Param     Object
+	Help      string
 }
 
 func (b *Flag) Type() ObjectType { return FLAG_OBJ }
