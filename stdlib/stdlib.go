@@ -153,10 +153,10 @@ func getReader(in *ast.Pipes) io.ReadCloser {
 	return nil
 }
 
-func getWriters(out *ast.Pipes) (io.Writer, io.Writer) {
+func getWriters(out *ast.Pipes) (io.WriteCloser, io.WriteCloser) {
 	var (
-		stdout io.Writer = os.Stdout
-		stderr io.Writer = os.Stderr
+		stdout io.WriteCloser = os.Stdout
+		stderr io.WriteCloser = os.Stderr
 	)
 	if out != nil {
 		r, w := io.Pipe()
