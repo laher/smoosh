@@ -161,9 +161,13 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 func evalProgram(program *ast.Program, env *object.Environment) object.Object {
 	var result object.Object
 
-	checkPipes(program.Statements)
+	connectPipes(program.Statements)
 	for _, statement := range program.Statements {
 		result = Eval(statement, env)
+		if shouldBePiping(statement) && !isPiping(statement) {
+			//verify that the in.Out is non-nil
+			panic("Call is not piping when it should be")
+		}
 
 		switch result := result.(type) {
 		case *object.ReturnValue:
@@ -182,9 +186,13 @@ func evalBlockStatement(
 ) object.Object {
 	var result object.Object
 
-	checkPipes(block.Statements)
+	connectPipes(block.Statements)
 	for _, statement := range block.Statements {
 		result = Eval(statement, env)
+		if shouldBePiping(statement) && !isPiping(statement) {
+			//verify that the in.Out is non-nil
+			panic("Call is not piping when it should be")
+		}
 
 		if result != nil {
 			rt := result.Type()
@@ -197,7 +205,25 @@ func evalBlockStatement(
 	return result
 }
 
-func checkPipes(statements []ast.Statement) {
+func shouldBePiping(statement ast.Statement) bool {
+	if expS, ok := statement.(*ast.ExpressionStatement); ok {
+		if c, ok := expS.Expression.(*ast.CallExpression); ok {
+			return c.Out != nil
+		}
+	}
+	return false
+}
+
+func isPiping(statement ast.Statement) bool {
+	if expS, ok := statement.(*ast.ExpressionStatement); ok {
+		if c, ok := expS.Expression.(*ast.CallExpression); ok {
+			return c.Out != nil && c.Out.Out != nil
+		}
+	}
+	return false
+}
+
+func connectPipes(statements []ast.Statement) {
 	for i, this := range statements {
 		if i > 0 {
 			prev := statements[i-1]

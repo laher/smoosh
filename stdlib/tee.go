@@ -58,9 +58,9 @@ func tee(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obj
 }
 
 func (tee *Tee) do(stdout io.WriteCloser, stdin io.ReadCloser) error {
-	flag := os.O_CREATE
+	flag := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
 	if tee.isAppend {
-		flag = flag | os.O_APPEND
+		flag = os.O_APPEND | os.O_WRONLY
 	}
 	closers := []io.WriteCloser{}
 	writers := []io.Writer{stdout}

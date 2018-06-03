@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
+	"strings"
+	"sync"
 
 	"github.com/alecthomas/template"
 	"github.com/laher/smoosh/ast"
@@ -95,14 +96,24 @@ func echo(env *object.Environment, in, out *ast.Pipes, args ...object.Object) ob
 		return object.NewError(err.Error())
 	}
 	o, _ := getWriters(out)
-	for i, w := range inputs {
-		s := " "
-		if len(inputs) == i+1 {
-			s = "\n"
+	wg := sync.WaitGroup{}
+	if out != nil {
+		out.Wait = func() error {
+			wg.Wait()
+			return nil
 		}
-
-		fmt.Fprintf(o, "%s%s", w, s)
 	}
+	w := strings.Join(inputs, " ")
+	if out != nil {
+		wg.Add(1)
+		go func() {
+			fmt.Fprintf(o, "%s\n", w)
+			wg.Done()
+		}()
+	} else {
+		fmt.Fprintf(o, "%s\n", w)
+	}
+
 	return Null
 }
 
@@ -161,11 +172,11 @@ func getWriters(out *ast.Pipes) (io.WriteCloser, io.WriteCloser) {
 	if out != nil {
 		r, w := io.Pipe()
 		stdout = w
-		out.Out = ioutil.NopCloser(r) // this will be closed by the evaluator
+		out.Out = r // this will be closed by the evaluator
 
 		r, w = io.Pipe()
 		stderr = w
-		out.Err = ioutil.NopCloser(r) // this will be closed by the evaluator
+		out.Err = r // this will be closed by the evaluator
 	}
 	return stdout, stderr
 }

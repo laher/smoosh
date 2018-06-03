@@ -46,7 +46,7 @@ func write(env *object.Environment, in, out *ast.Pipes, args ...object.Object) o
 		}
 	}
 	if in == nil {
-		return Null
+		return object.NewError("Nothing to write. 'w' expects an input stream")
 	}
 	opts := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
 	if app {
@@ -64,12 +64,10 @@ func write(env *object.Environment, in, out *ast.Pipes, args ...object.Object) o
 			}
 			f.Close()
 		}()
-		go func() {
-			if _, err := io.Copy(f, in.Out); err != nil {
-				//return object.NewError(err.Error())
-				panic(err.Error())
-			}
-		}()
+		if _, err := io.Copy(f, in.Out); err != nil {
+			//return object.NewError(err.Error())
+			panic(err.Error())
+		}
 	}
 	// stderr
 	if len(inputs) > 1 && inputs[1] != "" && in.Err != nil {
@@ -83,12 +81,10 @@ func write(env *object.Environment, in, out *ast.Pipes, args ...object.Object) o
 			}
 			f.Close()
 		}()
-		go func() {
-			if _, err := io.Copy(f, in.Err); err != nil {
-				//return object.NewError(err.Error())
-				panic(err.Error())
-			}
-		}()
+		if _, err := io.Copy(f, in.Err); err != nil {
+			//return object.NewError(err.Error())
+			panic(err.Error())
+		}
 	}
 	return Null
 }

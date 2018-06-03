@@ -1,8 +1,8 @@
 
 
-#for (var j = 1; j<10; j=j+1) {
-#  echo("done")
-#  echo("111\n")|w("x.tmp")
-#  echo("done")
-#}
+for (var j = 1; j<10; j=j+1) {
+  echo("done")
+  echo("111\n")|w("x.tmp")
+  echo("done")
+}
 head("x.tmp")
