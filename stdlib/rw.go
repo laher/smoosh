@@ -9,19 +9,30 @@ import (
 	"github.com/laher/smoosh/object"
 )
 
+func init() {
+	RegisterBuiltin("w", &object.Builtin{
+		Fn:    write,
+		Flags: []object.Flag{{Name: "a"}}})
+	RegisterFn("r", read)
+}
+
 func write(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
-	if len(args) < 1 || len(args) > 2 {
+	if len(args) < 1 {
 		return object.NewError("wrong number of arguments. got=%d, want=1 or 2",
 			len(args))
 	}
 	inputs := []string{}
 	envV := env.Export()
-	for i, arg := range args {
-		if arg.Type() != object.STRING_OBJ {
-			return object.NewError("argument to `$` must be STRING, got %s",
-				args[i].Type())
-		}
-		switch argT := arg.(type) {
+	app := false
+	for i := range args {
+		switch argT := args[i].(type) {
+		case *object.Flag:
+			switch argT.Name {
+			case "a":
+				app = true
+			default:
+				return object.NewError("flag %s not supported", argT.Name)
+			}
 		case *object.String:
 			input, err := Interpolate(envV, argT.Value)
 			if err != nil {
@@ -37,8 +48,13 @@ func write(env *object.Environment, in, out *ast.Pipes, args ...object.Object) o
 	if in == nil {
 		return Null
 	}
+	opts := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+	if app {
+		opts = os.O_APPEND | os.O_WRONLY
+	}
+	// stdout
 	if inputs[0] != "" {
-		f, err := os.Create(inputs[0])
+		f, err := os.OpenFile(inputs[0], opts, 0666)
 		if err != nil {
 			return object.NewError(err.Error())
 		}
@@ -55,8 +71,9 @@ func write(env *object.Environment, in, out *ast.Pipes, args ...object.Object) o
 			}
 		}()
 	}
+	// stderr
 	if len(inputs) > 1 && inputs[1] != "" && in.Err != nil {
-		f, err := os.Create(inputs[1])
+		f, err := os.OpenFile(inputs[1], opts, 0666)
 		if err != nil {
 			return object.NewError(err.Error())
 		}

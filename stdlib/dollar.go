@@ -12,8 +12,6 @@ import (
 
 func init() {
 	RegisterFn("$", dollar)
-	RegisterFn("w", write)
-	RegisterFn("r", read)
 }
 
 func dollar(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {

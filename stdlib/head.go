@@ -34,7 +34,7 @@ func (head *Head) Name() string {
 
 // Exec actually performs the head
 func head(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
-	head := &Head{}
+	head := &Head{lines: 10}
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
@@ -107,17 +107,15 @@ func (head *Head) head(out io.Writer, in io.Reader) error {
 	for lineNo <= head.lines {
 		text, err := reader.ReadBytes(byte(ch))
 		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
 			return err
 		}
 		//text := scanner.Text()
 		fmt.Fprintf(out, "%s", text) //, string(ch))
 		lineNo++
 	}
-	/*err := scanner.Err()
-	if err != nil {
-		return err
-	}
-	*/
 	return nil
 }
 
