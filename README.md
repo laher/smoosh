@@ -34,7 +34,21 @@ Smoosh will look a bit like this … (this isn't completely implemented yet)
 * Builtins:
   - [X] basic builtins such as `cd`, `exit`, `pwd`, `len`
   - [X] Redirection helpers which avoid `>`/`<` symbols (avoid gt/lt collisions). i.e. `r()` and `w()`
-  - [ ] `a()` for append-to-file
+  - [X] `w(a, "x.txt")` for append-to-file
+  - [ ] 'coreutils' (roughly)
+    - [X] basename, dirname
+    - [X] cat
+    - [X] cp, mv, rm
+    - [X] grep
+    - [X] gunzip, gzip
+    - [ ] zip, unzip
+    - [X] head, tail
+    - [X] ls
+    - [X] sleep
+    - [X] tee
+    - [X] touch
+    - [X] wc
+    - [X] which
   - [ ] `alias`, `unalias`
   - [ ] pipe stuff e.g. `red(2,1)` for redirection
   - [ ] process-handling stuff (signals, exit codes, async processing ...)
