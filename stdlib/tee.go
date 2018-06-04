@@ -27,6 +27,11 @@ type Tee struct {
 
 func tee(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
 	tee := &Tee{}
+	inputs, err := interpolateArgs(env, args, false)
+	if err != nil {
+		return object.NewError(err.Error())
+	}
+	tee.args = inputs
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
@@ -36,21 +41,11 @@ func tee(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obj
 			default:
 				return object.NewError("flag %s not supported", arg.Name)
 			}
-		case *object.String:
-			//Filenames (globs):
-			d, err := Interpolate(env.Export(), arg.Value)
-			if err != nil {
-				return object.NewError(err.Error())
-			}
-			tee.args = append(tee.args, d)
-		default:
-			return object.NewError("argument %d not supported, got %s", i,
-				args[0].Type())
 		}
 	}
 	stdout, _ := getWriters(out)
 	stdin := getReader(in)
-	err := tee.do(stdout, stdin)
+	err = tee.do(stdout, stdin)
 	if err != nil {
 		return object.NewError(err.Error())
 	}

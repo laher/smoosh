@@ -78,18 +78,26 @@ func ls(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obje
 				args[0].Type())
 		}
 	}
-	err := ls.Go(in, out)
-	if err != nil {
-		return object.NewError(err.Error())
+
+	stdin := getReader(in)
+	stdout, stderr := getWriters(out)
+	op := func() error {
+		return ls.Go(stdin, stdout, stderr)
+	}
+	if out != nil {
+		doAsync(op, out, stderr)
+	} else {
+		err := op()
+		if err != nil {
+			return object.NewError(err.Error())
+		}
 	}
 	return Null
 }
 
 // Go actually runs the ls ...
-func (ls *Ls) Go(in, out *ast.Pipes) error {
-	stdout, stderr := getWriters(out)
+func (ls *Ls) Go(stdin io.Reader, stdout, stderr io.Writer) error {
 	tout := tabwriter.NewWriter(stdout, 4, 4, 1, ' ', 0)
-	stdin := getReader(in)
 
 	args, err := getDirList(ls, stdin)
 	if err != nil {
@@ -152,58 +160,6 @@ func (ls *Ls) Go(in, out *ast.Pipes) error {
 	return nil
 }
 
-/*
-func _ls(arg string, lenArgs, i, counter int, allFiles, lastWasDir bool, out *ast.Pipes) error {
-	if !strings.HasPrefix(arg, ".") || allFiles ||
-		strings.HasPrefix(arg, "..") || "." == arg {
-		argInfo, err := os.Stat(arg)
-		if err != nil {
-			fmt.Fprintln(stderr, "stat failed for ", arg)
-			return err
-		}
-		if argInfo.IsDir() {
-
-			if lenArgs > 1 { //if more than one, print dir name before contents
-				if i > 0 {
-					fmt.Fprintf(stdout, "\n")
-				}
-				if !lastWasDir {
-					fmt.Fprintf(stdout, "\n")
-				}
-				fmt.Fprintf(stdout, "%s:\n", arg)
-			}
-			dir := arg
-
-			//show . and ..
-			if allFiles {
-				df, err := os.Stat(filepath.Dir(dir))
-				if err != nil {
-					fmt.Fprintf(stderr, "Error opening parent dir: %v", err)
-				} else {
-					printEntry("..", df, out, ls, &counter)
-				}
-				df, err = os.Stat(dir)
-				if err != nil {
-					fmt.Fprintf(stderr, "Error opening dir: %v", err)
-				} else {
-					printEntry(".", df, stdout, ls, &counter)
-				}
-			}
-
-			err := list(stdout, stderr, dir, "", ls, &counter)
-			if err != nil {
-				return err
-			}
-			if lenArgs > 1 {
-				fmt.Fprintf(stdout, "\n")
-			}
-		} else {
-			listItem(argInfo, stdout, stderr, filepath.Dir(arg), "", ls, &counter)
-		}
-		lastWasDir = argInfo.IsDir()
-	}
-}
-*/
 func list(out *tabwriter.Writer, errPipe io.Writer, dir, prefix string, ls *Ls) error {
 	if !strings.HasPrefix(dir, ".") || ls.AllFiles ||
 		strings.HasPrefix(dir, "..") || "." == dir {

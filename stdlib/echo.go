@@ -14,14 +14,15 @@ func init() {
 }
 
 func echo(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
-	if len(args) < 1 || len(args) > 2 {
-		return object.NewError("wrong number of arguments. got=%d, want=1 or 2",
-			len(args))
-	}
 	inputs, err := interpolateArgs(env, args, false)
 	if err != nil {
 		return object.NewError(err.Error())
 	}
+	if len(inputs) < 1 || len(inputs) > 2 {
+		return object.NewError("wrong number of arguments. got=%d, want=1 or 2",
+			len(inputs))
+	}
+
 	o, _ := getWriters(out)
 	wg := sync.WaitGroup{}
 	if out != nil {
