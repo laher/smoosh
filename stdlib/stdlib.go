@@ -108,6 +108,7 @@ func echo(env *object.Environment, in, out *ast.Pipes, args ...object.Object) ob
 		wg.Add(1)
 		go func() {
 			fmt.Fprintf(o, "%s\n", w)
+			o.Close()
 			wg.Done()
 		}()
 	} else {
