@@ -66,8 +66,6 @@ func cat(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obj
 	return Null
 }
 
-type op func() error
-
 func catIt(stdin io.Reader, stdout io.Writer, fileNames []string, showEnds, number, squeezeBlank bool) op {
 	var op op
 	if len(fileNames) > 0 {
