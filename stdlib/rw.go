@@ -17,12 +17,15 @@ func init() {
 }
 
 func write(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
-	if len(args) < 1 {
+	inputs, err := interpolateArgs(env, args, false)
+	if err != nil {
+		return object.NewError(err.Error())
+	}
+	if len(inputs) < 1 || len(inputs) > 2 {
 		return object.NewError("wrong number of arguments. got=%d, want=1 or 2",
 			len(args))
 	}
-	inputs := []string{}
-	envV := env.Export()
+
 	app := false
 	for i := range args {
 		switch argT := args[i].(type) {
@@ -33,16 +36,6 @@ func write(env *object.Environment, in, out *ast.Pipes, args ...object.Object) o
 			default:
 				return object.NewError("flag %s not supported", argT.Name)
 			}
-		case *object.String:
-			input, err := Interpolate(envV, argT.Value)
-			if err != nil {
-				return object.NewError("cannot parse arg for interpolation - %s",
-					err)
-			}
-			inputs = append(inputs, input)
-		default:
-			return object.NewError("argument to `$` not supported, got %s",
-				argT.Type())
 		}
 	}
 	if in == nil {
@@ -65,8 +58,9 @@ func write(env *object.Environment, in, out *ast.Pipes, args ...object.Object) o
 			f.Close()
 		}()
 		if _, err := io.Copy(f, in.Out); err != nil {
-			//return object.NewError(err.Error())
-			panic(err.Error())
+			if err != io.ErrClosedPipe {
+				return object.NewError(err.Error())
+			}
 		}
 	}
 	// stderr
@@ -83,7 +77,9 @@ func write(env *object.Environment, in, out *ast.Pipes, args ...object.Object) o
 		}()
 		if _, err := io.Copy(f, in.Err); err != nil {
 			//return object.NewError(err.Error())
-			panic(err.Error())
+			if err != io.ErrClosedPipe {
+				return object.NewError(err.Error())
+			}
 		}
 	}
 	return Null
@@ -94,7 +90,7 @@ func read(env *object.Environment, in, out *ast.Pipes, args ...object.Object) ob
 		return object.NewError("wrong number of arguments. got=%d, want=1 or 2",
 			len(args))
 	}
-	inputs, err := InterpolateArgsAsStrings(env, args)
+	inputs, err := interpolateArgs(env, args, false)
 	if err != nil {
 		return object.NewError(err.Error())
 	}

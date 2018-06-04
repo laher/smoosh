@@ -23,7 +23,8 @@ func TestCat(t *testing.T) {
 	for _, test := range tests {
 		in := bytes.NewBuffer([]byte(test.stdin))
 		out := bytes.NewBuffer([]byte{})
-		err := catIt(out, in, test.f, test.ends, test.n, test.sq)
+		op := catIt(in, out, test.f, test.ends, test.n, test.sq)
+		err := op()
 		if err != nil {
 			t.Errorf("unexpected error %v", err)
 		}
