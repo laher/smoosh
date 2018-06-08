@@ -1,0 +1,10 @@
+sudo: false
+dist: trusty
+
+language: go
+go:
+- '1.10'
+
+script:
+- bash $TRAVIS_BUILD_DIR/travis-ci/build.sh
+
