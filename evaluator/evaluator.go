@@ -2,6 +2,8 @@ package evaluator
 
 import (
 	"fmt"
+	"io"
+	"sync"
 
 	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
@@ -498,13 +500,44 @@ func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, e
 		return unwrapReturnValue(evaluated)
 
 	case *object.Builtin:
-		return fn.Fn(env, in, out, args...)
-
+		op, err := fn.Fn(object.Scope{env, in, out}, args...)
+		if err != nil {
+			return object.NewError(err.Error())
+		}
+		if out != nil {
+			// TODO doAsync
+			doAsync(op, out, nil)
+			return Null
+		}
+		return op()
 	default:
 		return newError("not a function: %s", fn.Type())
 	}
 }
 
+var (
+	// Null can be a single isntance for the app
+	Null = &object.Null{}
+)
+
+func doAsync(op object.Operation, out *ast.Pipes, stderr io.WriteCloser) {
+	wg := sync.WaitGroup{}
+	out.Wait = func() error {
+		wg.Wait()
+		return nil
+	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer out.Out.Close()
+		o := op()
+		if oe, ok := o.(*object.Error); ok {
+			//TODO stderr
+			fmt.Fprintln(stderr, oe.Message)
+		}
+	}()
+
+}
 func extendFunctionEnv(
 	fn *object.Function,
 	args []object.Object,

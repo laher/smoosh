@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/alecthomas/template"
 	"github.com/laher/smoosh/ast"
@@ -89,22 +88,4 @@ func getWriters(out *ast.Pipes) (io.WriteCloser, io.WriteCloser) {
 		out.Err = r // this will be closed by the evaluator
 	}
 	return stdout, stderr
-}
-
-func doAsync(op op, out *ast.Pipes, stderr io.WriteCloser) {
-	wg := sync.WaitGroup{}
-	out.Wait = func() error {
-		wg.Wait()
-		return nil
-	}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		defer out.Out.Close()
-		err := op()
-		if err != nil {
-			fmt.Fprintln(stderr, err.Error())
-		}
-	}()
-
 }
