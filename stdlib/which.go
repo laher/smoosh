@@ -8,7 +8,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -22,7 +21,7 @@ func init() {
 	})
 }
 
-func which(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func which(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	which := Which{}
 	for i := range args {
 		switch arg := args[i].(type) {
@@ -31,28 +30,30 @@ func which(env *object.Environment, in, out *ast.Pipes, args ...object.Object) o
 			case "a":
 				which.all = true
 			default:
-				return object.NewError("flag %s not supported", arg.Name)
+				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
 
 		case *object.String:
 			//Filenames (globs):
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(scope.Env.Export(), arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, fmt.Errorf(err.Error())
 			}
 			which.args = append(which.args, d)
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
-	stdin := getReader(in)
-	stdout, _ := getWriters(out)
-	err := which.do(stdout, stdin)
-	if err != nil {
-		return object.NewError(err.Error())
-	}
-	return Null
+	stdin := getReader(scope.In)
+	stdout, _ := getWriters(scope.Out)
+	return func() object.Object {
+		err := which.do(stdout, stdin)
+		if err != nil {
+			return object.NewError(err.Error())
+		}
+		return Null
+	}, nil
 }
 
 // Which represents and performs a `which` invocation

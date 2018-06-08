@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -26,7 +25,7 @@ type Rm struct {
 	fileGlobs   []string
 }
 
-func rm(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func rm(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	rm := Rm{}
 	for i := range args {
 		switch arg := args[i].(type) {
@@ -35,35 +34,38 @@ func rm(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obje
 			case "r": //follow by name
 				rm.IsRecursive = true
 			default:
-				return object.NewError("flag %s not supported", arg.Name)
+				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
 		case *object.String:
 			//Filenames (globs):
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(scope.Env.Export(), arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, fmt.Errorf(err.Error())
 			}
 			rm.fileGlobs = append(rm.fileGlobs, d)
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
 
+	allFiles := []string{}
 	for _, fileGlob := range rm.fileGlobs {
 		files, err := filepath.Glob(fileGlob)
 		if err != nil {
-			return object.NewError(err.Error())
+			return nil, fmt.Errorf(err.Error())
 		}
-		for _, file := range files {
+		allFiles = append(allFiles, files...)
+	}
+	return func() object.Object {
+		for _, file := range allFiles {
 			err := deleteFile(file, rm.IsRecursive)
 			if err != nil {
 				return object.NewError(err.Error())
 			}
 		}
-	}
-
-	return Null
+		return Null
+	}, nil
 }
 
 func deleteFile(file string, recursive bool) error {

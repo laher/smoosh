@@ -1,10 +1,10 @@
 package stdlib
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -15,7 +15,7 @@ func init() {
 
 }
 
-func mv(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func mv(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	var (
 		srcGlobs []string
 		dest     string
@@ -23,11 +23,11 @@ func mv(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obje
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
-			return object.NewError("flag %s not supported", arg.Name)
+			return nil, fmt.Errorf("flag %s not supported", arg.Name)
 		case *object.String:
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(scope.Env.Export(), arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, err
 			}
 			if i+1 < len(args) {
 				srcGlobs = append(srcGlobs, d)
@@ -35,17 +35,19 @@ func mv(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obje
 				dest = d
 			}
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
-	for _, src := range srcGlobs {
-		err := moveFile(src, dest)
-		if err != nil {
-			return object.NewError(err.Error())
+	return func() object.Object {
+		for _, src := range srcGlobs {
+			err := moveFile(src, dest)
+			if err != nil {
+				return object.NewError(err.Error())
+			}
 		}
-	}
-	return Null
+		return Null
+	}, nil
 }
 
 func moveFile(src, dest string) error {

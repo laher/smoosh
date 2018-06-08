@@ -5,7 +5,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -16,26 +15,26 @@ func init() {
 
 }
 
-func basename(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func basename(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	var relativeTo, inputPath string
 	myArgs := []string{}
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
-			return object.NewError("flag %s not supported", arg.Name)
+			return nil, fmt.Errorf("flag %s not supported", arg.Name)
 		case *object.String:
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(scope.Env.Export(), arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, fmt.Errorf(err.Error())
 			}
 			myArgs = append(myArgs, d)
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
 	if len(myArgs) < 1 {
-		return object.NewError("Missing operand")
+		return nil, fmt.Errorf("Missing operand")
 	}
 	if len(myArgs) > 1 {
 		relativeTo = myArgs[0]
@@ -44,13 +43,15 @@ func basename(env *object.Environment, in, out *ast.Pipes, args ...object.Object
 		inputPath = myArgs[0]
 	}
 
-	base := basenameFile(inputPath, relativeTo)
-	stdout, _ := getWriters(out)
-	_, err := fmt.Fprintln(stdout, base)
-	if err != nil {
-		return object.NewError(err.Error())
-	}
-	return &object.String{Value: base}
+	return func() object.Object {
+		base := basenameFile(inputPath, relativeTo)
+		stdout, _ := getWriters(scope.Out)
+		_, err := fmt.Fprintln(stdout, base)
+		if err != nil {
+			return object.NewError(err.Error())
+		}
+		return &object.String{Value: base}
+	}, nil
 }
 
 func basenameFile(inputPath, relativeTo string) string {

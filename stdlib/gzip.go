@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -33,7 +32,7 @@ type Gzip struct {
 	outFile   string
 }
 
-func gz(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func gz(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	gz := &Gzip{}
 	for i := range args {
 		switch arg := args[i].(type) {
@@ -44,86 +43,88 @@ func gz(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obje
 			case "c":
 				gz.IsStdout = true
 			default:
-				return object.NewError("flag %s not supported", arg.Name)
+				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
 
 		case *object.String:
 			//Filenames (globs):
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(scope.Env.Export(), arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, err
 			}
 			gz.Filenames = append(gz.Filenames, d)
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
 
-	stdout, _ := getWriters(out)
-	stdin := getReader(in)
-	if len(gz.Filenames) < 1 {
-		//pipe in?
-		var writer io.WriteCloser
-		var outputFilename string
-		if gz.outFile != "" {
-			outputFilename = gz.outFile
-			var err error
-			writer, err = os.Create(outputFilename)
-			if err != nil {
-				return object.NewError(err.Error())
-			}
-			defer writer.Close()
-		} else {
-			//	fmt.Printf("stdin to stdout: %+v\n", gz)
-			outputFilename = "S" //seems to be the default used by gzip
-			writer = stdout
-		}
-		err := gz.doGzip(stdin, writer, filepath.Base(outputFilename))
-		if err != nil {
-			return object.NewError(err.Error())
-		}
-	} else {
-		//todo make sure it closes saved file cleanly
-		for _, inputFilename := range gz.Filenames {
-			inputFile, err := os.Open(inputFilename)
-			if err != nil {
-				return object.NewError(err.Error())
-			}
-			defer inputFile.Close()
-
-			var writer io.Writer
-			if !gz.IsStdout {
-				outputFilename := inputFilename + ".gz"
-				gzf, err := os.Create(outputFilename)
+	return func() object.Object {
+		stdout, _ := getWriters(scope.Out)
+		stdin := getReader(scope.In)
+		if len(gz.Filenames) < 1 {
+			//pipe in?
+			var writer io.WriteCloser
+			var outputFilename string
+			if gz.outFile != "" {
+				outputFilename = gz.outFile
+				var err error
+				writer, err = os.Create(outputFilename)
 				if err != nil {
 					return object.NewError(err.Error())
 				}
-				defer gzf.Close()
-				writer = gzf
+				defer writer.Close()
 			} else {
+				//	fmt.Printf("stdin to stdout: %+v\n", gz)
+				outputFilename = "S" //seems to be the default used by gzip
 				writer = stdout
 			}
-			err = gz.doGzip(inputFile, writer, filepath.Base(inputFilename))
+			err := gz.doGzip(stdin, writer, filepath.Base(outputFilename))
 			if err != nil {
 				return object.NewError(err.Error())
 			}
-
-			err = inputFile.Close()
-			if err != nil {
-				return object.NewError(err.Error())
-			}
-
-			// only remove source if specified and possible
-			if !gz.IsKeep && !gz.IsStdout {
-				err = os.Remove(inputFilename)
+		} else {
+			//todo make sure it closes saved file cleanly
+			for _, inputFilename := range gz.Filenames {
+				inputFile, err := os.Open(inputFilename)
 				if err != nil {
 					return object.NewError(err.Error())
 				}
+				defer inputFile.Close()
+
+				var writer io.Writer
+				if !gz.IsStdout {
+					outputFilename := inputFilename + ".gz"
+					gzf, err := os.Create(outputFilename)
+					if err != nil {
+						return object.NewError(err.Error())
+					}
+					defer gzf.Close()
+					writer = gzf
+				} else {
+					writer = stdout
+				}
+				err = gz.doGzip(inputFile, writer, filepath.Base(inputFilename))
+				if err != nil {
+					return object.NewError(err.Error())
+				}
+
+				err = inputFile.Close()
+				if err != nil {
+					return object.NewError(err.Error())
+				}
+
+				// only remove source if specified and possible
+				if !gz.IsKeep && !gz.IsStdout {
+					err = os.Remove(inputFilename)
+					if err != nil {
+						return object.NewError(err.Error())
+					}
+				}
 			}
 		}
-	}
-	return Null
+		return Null
+	}, nil
 }
 
 func (gz *Gzip) doGzip(reader io.Reader, writer io.Writer, filename string) error {

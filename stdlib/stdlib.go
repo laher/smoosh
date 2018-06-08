@@ -91,9 +91,6 @@ func getWriters(out *ast.Pipes) (io.WriteCloser, io.WriteCloser) {
 	return stdout, stderr
 }
 
-// helper for async/sync versions of functions.
-type op func() error
-
 func doAsync(op op, out *ast.Pipes, stderr io.WriteCloser) {
 	wg := sync.WaitGroup{}
 	out.Wait = func() error {

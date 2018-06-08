@@ -12,7 +12,6 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -23,6 +22,7 @@ func init() {
 		object.Flag{Name: "a"},
 		object.Flag{Name: "h"},
 	}
+
 	RegisterBuiltin("ls", &object.Builtin{
 		Fn:    ls,
 		Flags: opts,
@@ -45,9 +45,28 @@ type Ls struct {
 	counter int
 }
 
-func ls(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+/*
+func (bi bi) builtinW(scope object.Scope, args ...object.Object) (object.Operation, error) {
+	op, err := bi.builtinO(env, in, out, args...)
+	if err != nil {
+		return object.NewError(err.Error())
+	}
+
+	if out != nil {
+		doAsync(op, out, nil)
+	} else {
+		err := op()
+		if err != nil {
+			return object.NewError(err.Error())
+		}
+	}
+	return Null
+}*/
+
+func ls(scope object.Scope, args ...object.Object) (object.Operation, error) {
+	//object.Object {
 	ls := &Ls{}
-	if in != nil {
+	if scope.In != nil {
 		ls.Stdin = true
 	}
 	for i := range args {
@@ -65,34 +84,29 @@ func ls(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obje
 			case "r":
 				ls.Recursive = true
 			default:
-				return object.NewError("flag %s not supported", arg.Name)
+				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
 		case *object.String:
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(scope.Env.Export(), arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, err
 			}
 			ls.globs = append(ls.globs, d)
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
 
-	stdin := getReader(in)
-	stdout, stderr := getWriters(out)
-	op := func() error {
-		return ls.Go(stdin, stdout, stderr)
-	}
-	if out != nil {
-		doAsync(op, out, stderr)
-	} else {
-		err := op()
+	stdin := getReader(scope.In)
+	stdout, stderr := getWriters(scope.Out)
+	return func() object.Object {
+		err := ls.Go(stdin, stdout, stderr)
 		if err != nil {
 			return object.NewError(err.Error())
 		}
-	}
-	return Null
+		return Null
+	}, nil
 }
 
 // Go actually runs the ls ...
@@ -226,7 +240,7 @@ func printEntry(name string, e os.FileInfo, out *tabwriter.Writer, ls *Ls) {
 	if ls.counter%3 == 2 || ls.LongList || ls.OnePerLine {
 		fmt.Fprintln(out, "")
 	}
-	ls.counter += 1
+	ls.counter++
 }
 
 func getModTimeString(e os.FileInfo) (s string) {

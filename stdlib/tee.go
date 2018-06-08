@@ -1,10 +1,10 @@
 package stdlib
 
 import (
+	"fmt"
 	"io"
 	"os"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -25,11 +25,11 @@ type Tee struct {
 	args     []string
 }
 
-func tee(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func tee(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	tee := &Tee{}
-	inputs, err := interpolateArgs(env, args, false)
+	inputs, err := interpolateArgs(scope.Env, args, false)
 	if err != nil {
-		return object.NewError(err.Error())
+		return nil, fmt.Errorf(err.Error())
 	}
 	tee.args = inputs
 	for i := range args {
@@ -39,17 +39,20 @@ func tee(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obj
 			case "a": //follow by name
 				tee.isAppend = true
 			default:
-				return object.NewError("flag %s not supported", arg.Name)
+				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
 		}
 	}
-	stdout, _ := getWriters(out)
-	stdin := getReader(in)
-	err = tee.do(stdout, stdin)
-	if err != nil {
-		return object.NewError(err.Error())
-	}
-	return Null
+	stdout, _ := getWriters(scope.Out)
+	stdin := getReader(scope.In)
+
+	return func() object.Object {
+		err = tee.do(stdout, stdin)
+		if err != nil {
+			return object.NewError(err.Error())
+		}
+		return Null
+	}, nil
 }
 
 func (tee *Tee) do(stdout io.WriteCloser, stdin io.ReadCloser) error {

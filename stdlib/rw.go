@@ -1,11 +1,11 @@
 package stdlib
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"sync"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -16,13 +16,13 @@ func init() {
 	RegisterFn("r", read)
 }
 
-func write(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
-	inputs, err := interpolateArgs(env, args, false)
+func write(scope object.Scope, args ...object.Object) (object.Operation, error) {
+	inputs, err := interpolateArgs(scope.Env, args, false)
 	if err != nil {
-		return object.NewError(err.Error())
+		return nil, err
 	}
 	if len(inputs) < 1 || len(inputs) > 2 {
-		return object.NewError("wrong number of arguments. got=%d, want=1 or 2",
+		return nil, fmt.Errorf("wrong number of arguments. got=%d, want=1 or 2",
 			len(args))
 	}
 
@@ -34,85 +34,87 @@ func write(env *object.Environment, in, out *ast.Pipes, args ...object.Object) o
 			case "a":
 				app = true
 			default:
-				return object.NewError("flag %s not supported", argT.Name)
+				return nil, fmt.Errorf("flag %s not supported", argT.Name)
 			}
 		}
 	}
-	if in == nil {
-		return object.NewError("Nothing to write. 'w' expects an input stream")
+	if scope.In == nil {
+		return nil, fmt.Errorf("Nothing to write. 'w' expects an input stream")
 	}
-	opts := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
-	if app {
-		opts = os.O_APPEND | os.O_WRONLY
-	}
-	// stdout
-	if inputs[0] != "" {
-		f, err := os.OpenFile(inputs[0], opts, 0666)
-		if err != nil {
-			return object.NewError(err.Error())
+	return func() object.Object {
+		opts := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+		if app {
+			opts = os.O_APPEND | os.O_WRONLY
 		}
-		defer func() {
-			if in.Wait != nil {
-				in.Wait()
-			}
-			f.Close()
-		}()
-		if _, err := io.Copy(f, in.Out); err != nil {
-			if err != io.ErrClosedPipe {
+		// stdout
+		if inputs[0] != "" {
+			f, err := os.OpenFile(inputs[0], opts, 0666)
+			if err != nil {
 				return object.NewError(err.Error())
 			}
-		}
-	}
-	// stderr
-	if len(inputs) > 1 && inputs[1] != "" && in.Err != nil {
-		f, err := os.OpenFile(inputs[1], opts, 0666)
-		if err != nil {
-			return object.NewError(err.Error())
-		}
-		defer func() {
-			if in.Wait != nil {
-				in.Wait()
+			defer func() {
+				if scope.In.Wait != nil {
+					scope.In.Wait()
+				}
+				f.Close()
+			}()
+			if _, err := io.Copy(f, scope.In.Out); err != nil {
+				if err != io.ErrClosedPipe {
+					return object.NewError(err.Error())
+				}
 			}
-			f.Close()
-		}()
-		if _, err := io.Copy(f, in.Err); err != nil {
-			//return object.NewError(err.Error())
-			if err != io.ErrClosedPipe {
+		}
+		// stderr
+		if len(inputs) > 1 && inputs[1] != "" && scope.In.Err != nil {
+			f, err := os.OpenFile(inputs[1], opts, 0666)
+			if err != nil {
 				return object.NewError(err.Error())
 			}
+			defer func() {
+				if scope.In.Wait != nil {
+					scope.In.Wait()
+				}
+				f.Close()
+			}()
+			if _, err := io.Copy(f, scope.In.Err); err != nil {
+				//return object.NewError(err.Error())
+				if err != io.ErrClosedPipe {
+					return object.NewError(err.Error())
+				}
+			}
 		}
-	}
-	return Null
+		return Null
+	}, nil
 }
 
-func read(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func read(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	if len(args) < 1 || len(args) > 2 {
-		return object.NewError("wrong number of arguments. got=%d, want=1 or 2",
+		return nil, fmt.Errorf("wrong number of arguments. got=%d, want=1 or 2",
 			len(args))
 	}
-	inputs, err := interpolateArgs(env, args, false)
+	inputs, err := interpolateArgs(scope.Env, args, false)
 	if err != nil {
-		return object.NewError(err.Error())
+		return nil, err
 	}
 	f, err := os.Open(inputs[0])
 	if err != nil {
-		return object.NewError(err.Error())
+		return nil, err
 	}
-	stdout, _ := getWriters(out)
+	stdout, _ := getWriters(scope.Out)
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	go func() {
+	if scope.Out != nil {
+		scope.Out.Wait = func() error {
+			wg.Wait()
+			return f.Close()
+		}
+	}
+	return func() object.Object {
 		if _, err := io.Copy(stdout, f); err != nil {
 			//return object.NewError(err.Error())
 			panic(err.Error())
 		}
 		wg.Done()
-	}()
-	if out != nil {
-		out.Wait = func() error {
-			wg.Wait()
-			return f.Close()
-		}
-	}
-	return Null
+		return Null
+	}, nil
 }

@@ -2,11 +2,11 @@ package stdlib
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -20,7 +20,7 @@ func init() {
 
 }
 
-func cp(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func cp(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	var (
 		srces     []string
 		dest      string
@@ -33,34 +33,36 @@ func cp(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obje
 			case "r":
 				recursive = true
 			default:
-				return object.NewError("flag %s not supported", arg.Name)
+				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
 		case *object.String:
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(scope.Env.Export(), arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, fmt.Errorf(err.Error())
 			}
 			if i+1 < len(args) {
 				ss, err := filepath.Glob(d)
 				if err != nil {
-					return object.NewError(err.Error())
+					return nil, fmt.Errorf(err.Error())
 				}
 				srces = append(srces, ss...)
 			} else {
 				dest = d
 			}
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
-	for _, src := range srces {
-		err := copyFile(src, dest, recursive)
-		if err != nil {
-			return object.NewError(err.Error())
+	return func() object.Object {
+		for _, src := range srces {
+			err := copyFile(src, dest, recursive)
+			if err != nil {
+				return object.NewError(err.Error())
+			}
 		}
-	}
-	return Null
+		return Null
+	}, nil
 }
 
 func copyFile(src, dest string, recursive bool) error {

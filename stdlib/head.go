@@ -33,7 +33,7 @@ func (head *Head) Name() string {
 }
 
 // Exec actually performs the head
-func head(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func head(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	head := &Head{lines: 10}
 	for i := range args {
 		switch arg := args[i].(type) {
@@ -42,33 +42,35 @@ func head(env *object.Environment, in, out *ast.Pipes, args ...object.Object) ob
 			case "n":
 				l, ok := arg.Param.(*object.Integer)
 				if !ok {
-					return object.NewError("flag %s parse error", arg.Name)
+					return nil, fmt.Errorf("flag %s parse error", arg.Name)
 				}
 				head.lines = l.Value
 			default:
-				return object.NewError("flag %s not supported", arg.Name)
+				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
 		case *object.String:
 			//Filenames (globs):
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(scope.Env.Export(), arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, err
 			}
 			head.Filenames = append(head.Filenames, d)
 		case *object.Integer:
 			// oops
 			head.lines = arg.Value
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
 
-	err := head.do(out, in)
-	if err != nil {
-		return object.NewError(err.Error())
-	}
-	return Null
+	return func() object.Object {
+		err := head.do(scope.Out, scope.In)
+		if err != nil {
+			return object.NewError(err.Error())
+		}
+		return Null
+	}, nil
 }
 
 func (head *Head) do(out, in *ast.Pipes) error {

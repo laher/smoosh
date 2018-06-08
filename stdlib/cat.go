@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -24,7 +23,7 @@ func init() {
 
 }
 
-func cat(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func cat(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	var showEnds, number, squeezeBlank bool
 	var fileNames = []string{}
 	for i := range args {
@@ -38,33 +37,33 @@ func cat(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obj
 			case "s":
 				squeezeBlank = true
 			default:
-				return object.NewError("flag %s not supported", arg.Name)
+				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
 		case *object.String:
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(scope.Env.Export(), arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, fmt.Errorf(err.Error())
 			}
 			fileNames = append(fileNames, d)
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
 
-	stdin := getReader(in)
-	stdout, stderr := getWriters(out)
+	stdin := getReader(scope.In)
+	stdout, _ := getWriters(scope.Out)
 	op := catIt(stdin, stdout, fileNames, showEnds, number, squeezeBlank)
-	if out != nil {
-		doAsync(op, out, stderr)
-	} else {
+	return func() object.Object {
 		err := op()
 		if err != nil {
 			return object.NewError(err.Error())
 		}
-	}
-	return Null
+		return Null
+	}, nil
 }
+
+type op func() error
 
 func catIt(stdin io.Reader, stdout io.Writer, fileNames []string, showEnds, number, squeezeBlank bool) op {
 	var op op

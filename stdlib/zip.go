@@ -2,11 +2,11 @@ package stdlib
 
 import (
 	"archive/zip"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -27,7 +27,7 @@ type Zip struct {
 	outFile   string
 }
 
-func z(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func z(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	gz := &Zip{}
 	for i := range args {
 		switch arg := args[i].(type) {
@@ -36,29 +36,34 @@ func z(env *object.Environment, in, out *ast.Pipes, args ...object.Object) objec
 			case "t":
 				gz.test = true
 			default:
-				return object.NewError("flag %s not supported", arg.Name)
+				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
 
 		case *object.String:
 			//Filenames (globs):
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(scope.Env.Export(), arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, fmt.Errorf(err.Error())
 			}
 			gz.Filenames = append(gz.Filenames, d)
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
 
 	if len(gz.Filenames) < 2 {
-		return object.NewError("Fewer than 2 filenames given")
+		return nil, fmt.Errorf("Fewer than 2 filenames given")
 	}
 	zipFilename := gz.Filenames[0]
 	itemsToArchive := gz.Filenames[1:]
-	zipItems(zipFilename, itemsToArchive)
-	return Null
+	return func() object.Object {
+		err := zipItems(zipFilename, itemsToArchive)
+		if err != nil {
+			return object.NewError(err.Error())
+		}
+		return Null
+	}, nil
 }
 
 func zipItems(zipFilename string, itemsToArchive []string) error {

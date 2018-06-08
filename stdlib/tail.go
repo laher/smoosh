@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -32,7 +31,7 @@ type Tail struct {
 	Filenames          []string
 }
 
-func tail(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func tail(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	tail := &Tail{SleepInterval: 1.0}
 	for i := range args {
 		switch arg := args[i].(type) {
@@ -41,7 +40,7 @@ func tail(env *object.Environment, in, out *ast.Pipes, args ...object.Object) ob
 			case "n":
 				l, ok := arg.Param.(*object.Integer)
 				if !ok {
-					return object.NewError("flag %s parse error", arg.Name)
+					return nil, fmt.Errorf("flag %s parse error", arg.Name)
 				}
 				tail.Lines = l.Value
 			case "F": //follow by name
@@ -50,32 +49,34 @@ func tail(env *object.Environment, in, out *ast.Pipes, args ...object.Object) ob
 				//TODO float
 				l, ok := arg.Param.(*object.Integer)
 				if !ok {
-					return object.NewError("flag %s parse error", arg.Name)
+					return nil, fmt.Errorf("flag %s parse error", arg.Name)
 				}
 				tail.SleepInterval = float64(l.Value)
 
 			default:
-				return object.NewError("flag %s not supported", arg.Name)
+				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
 		case *object.String:
 			//Filenames (globs):
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(scope.Env.Export(), arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, fmt.Errorf(err.Error())
 			}
 			tail.Filenames = append(tail.Filenames, d)
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
-	stdout, _ := getWriters(out)
-	stdin := getReader(in)
-	err := tail.do(stdout, stdin)
-	if err != nil {
-		return object.NewError(err.Error())
-	}
-	return Null
+	stdout, _ := getWriters(scope.Out)
+	stdin := getReader(scope.In)
+	return func() object.Object {
+		err := tail.do(stdout, stdin)
+		if err != nil {
+			return object.NewError(err.Error())
+		}
+		return Null
+	}, nil
 }
 
 func (tail *Tail) do(stdout io.Writer, stdin io.Reader) error {

@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -30,7 +29,7 @@ type Wc struct {
 	args    []string
 }
 
-func wc(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func wc(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	wc := Wc{}
 	for i := range args {
 		switch arg := args[i].(type) {
@@ -43,28 +42,30 @@ func wc(env *object.Environment, in, out *ast.Pipes, args ...object.Object) obje
 			case "l":
 				wc.IsLines = true
 			default:
-				return object.NewError("flag %s not supported", arg.Name)
+				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
 
 		case *object.String:
 			//Filenames (globs):
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(scope.Env.Export(), arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, fmt.Errorf(err.Error())
 			}
 			wc.args = append(wc.args, d)
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
-	stdin := getReader(in)
-	stdout, _ := getWriters(out)
-	err := wc.do(stdout, stdin)
-	if err != nil {
-		return object.NewError(err.Error())
-	}
-	return Null
+	stdin := getReader(scope.In)
+	stdout, _ := getWriters(scope.Out)
+	return func() object.Object {
+		err := wc.do(stdout, stdin)
+		if err != nil {
+			return object.NewError(err.Error())
+		}
+		return Null
+	}, nil
 }
 
 // Invoke actually performs the wc

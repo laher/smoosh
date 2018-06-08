@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -30,8 +29,9 @@ type Gunzip struct {
 	Filenames []string
 }
 
-func gunzip(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func gunzip(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	gunzip := &Gunzip{}
+	exp := scope.Env.Export()
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
@@ -43,37 +43,38 @@ func gunzip(env *object.Environment, in, out *ast.Pipes, args ...object.Object) 
 			case "c":
 				gunzip.IsPipeOut = true
 			default:
-				return object.NewError("flag %s not supported", arg.Name)
+				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
 
 		case *object.String:
 			//Filenames (globs):
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(exp, arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, fmt.Errorf(err.Error())
 			}
 			gunzip.Filenames = append(gunzip.Filenames, d)
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
 
-	stdout, stderr := getWriters(out)
-	stdin := getReader(in)
-	if gunzip.IsTest {
-		err := TestGzipItems(gunzip.Filenames)
-		if err != nil {
-			return object.NewError(err.Error())
+	return func() object.Object {
+		stdout, stderr := getWriters(scope.Out)
+		stdin := getReader(scope.In)
+		if gunzip.IsTest {
+			err := TestGzipItems(gunzip.Filenames)
+			if err != nil {
+				return object.NewError(err.Error())
+			}
+		} else {
+			err := gunzip.gunzipItems(stdin, stdout, stderr)
+			if err != nil {
+				return object.NewError(err.Error())
+			}
 		}
-	} else {
-		err := gunzip.gunzipItems(stdin, stdout, stderr)
-		if err != nil {
-			return object.NewError(err.Error())
-		}
-	}
-
-	return Null
+		return Null
+	}, nil
 }
 
 func TestGzipItems(items []string) error {

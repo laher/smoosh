@@ -1,10 +1,10 @@
 package stdlib
 
 import (
+	"fmt"
 	"os"
 	"time"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -23,29 +23,31 @@ type Touch struct {
 	args []string
 }
 
-func touch(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func touch(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	touch := &Touch{}
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.String:
 			//Filenames (globs):
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(scope.Env.Export(), arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, fmt.Errorf(err.Error())
 			}
 			touch.args = append(touch.args, d)
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
-	for _, f := range touch.args {
-		err := touchFile(f)
-		if err != nil {
-			return object.NewError(err.Error())
+	return func() object.Object {
+		for _, f := range touch.args {
+			err := touchFile(f)
+			if err != nil {
+				return object.NewError(err.Error())
+			}
 		}
-	}
-	return Null
+		return Null
+	}, nil
 }
 
 func touchFile(filename string) error {

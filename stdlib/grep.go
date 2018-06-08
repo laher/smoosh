@@ -9,7 +9,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -46,10 +45,11 @@ type Grep struct {
 	globs   []string
 }
 
-func grep(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func grep(scope object.Scope, args ...object.Object) (object.Operation, error) {
 
 	grep := &Grep{}
 	myArgs := []string{}
+	exp := scope.Env.Export()
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
@@ -67,21 +67,21 @@ func grep(env *object.Environment, in, out *ast.Pipes, args ...object.Object) ob
 			case "E":
 				grep.IsExtended = true
 			default:
-				return object.NewError("flag %s not supported", arg.Name)
+				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
 		case *object.String:
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(exp, arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, fmt.Errorf(err.Error())
 			}
 			myArgs = append(myArgs, d)
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
 	if len(myArgs) < 1 {
-		return object.NewError("Missing operand")
+		return nil, fmt.Errorf("Missing operand")
 	}
 	if len(myArgs) > 1 {
 		grep.globs = myArgs[1:]
@@ -89,37 +89,39 @@ func grep(env *object.Environment, in, out *ast.Pipes, args ...object.Object) ob
 	grep.pattern = myArgs[0]
 	reg, err := compile(grep)
 	if err != nil {
-		return object.NewError(err.Error())
+		return nil, fmt.Errorf(err.Error())
 	}
-	stdout, _ := getWriters(out)
-	if len(grep.globs) > 0 {
-		files := []string{}
-		for _, glob := range grep.globs {
-			results, err := filepath.Glob(glob)
-			if err != nil {
-				return object.NewError(err.Error())
+	return func() object.Object {
+		stdout, _ := getWriters(scope.Out)
+		if len(grep.globs) > 0 {
+			files := []string{}
+			for _, glob := range grep.globs {
+				results, err := filepath.Glob(glob)
+				if err != nil {
+					return object.NewError(err.Error())
+				}
+				if len(results) < 1 { //no match
+					return object.NewError("grep: cannot access %s: No such file or directory", glob)
+				}
+				files = append(files, results...)
 			}
-			if len(results) < 1 { //no match
-				return object.NewError("grep: cannot access %s: No such file or directory", glob)
-			}
-			files = append(files, results...)
-		}
-		err = grepAll(reg, files, grep, stdout)
-		if err != nil {
-			return object.NewError(err.Error())
-		}
-	} else {
-		if in != nil {
-			err = grepReader(in.Out, "", reg, grep, stdout)
+			err = grepAll(reg, files, grep, stdout)
 			if err != nil {
 				return object.NewError(err.Error())
 			}
 		} else {
-			//NOT piping.
-			return object.NewError("Not enough args")
+			if scope.In != nil {
+				err = grepReader(scope.In.Out, "", reg, grep, stdout)
+				if err != nil {
+					return object.NewError(err.Error())
+				}
+			} else {
+				//NOT piping.
+				return object.NewError("Not enough args")
+			}
 		}
-	}
-	return Null
+		return Null
+	}, nil
 }
 
 func grepAll(reg *regexp.Regexp, files []string, grep *Grep, out io.Writer) error {

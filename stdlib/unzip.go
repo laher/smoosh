@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -31,7 +30,7 @@ type Unzip struct {
 	ZipFile   string
 }
 
-func unzip(env *object.Environment, in, out *ast.Pipes, args ...object.Object) object.Object {
+func unzip(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	unzip := &Unzip{destDir: "."}
 	for i := range args {
 		switch arg := args[i].(type) {
@@ -42,18 +41,18 @@ func unzip(env *object.Environment, in, out *ast.Pipes, args ...object.Object) o
 			case "d":
 				s, ok := arg.Param.(*object.String)
 				if !ok {
-					return object.NewError("flag %s does not have a valid parameter", arg.Name)
+					return nil, fmt.Errorf("flag %s does not have a valid parameter", arg.Name)
 				}
 				unzip.destDir = s.Value
 			default:
-				return object.NewError("flag %s not supported", arg.Name)
+				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
 
 		case *object.String:
 			//Filenames (globs):
-			d, err := Interpolate(env.Export(), arg.Value)
+			d, err := Interpolate(scope.Env.Export(), arg.Value)
 			if err != nil {
-				return object.NewError(err.Error())
+				return nil, fmt.Errorf(err.Error())
 			}
 			if unzip.ZipFile == "" {
 				unzip.ZipFile = d
@@ -61,25 +60,26 @@ func unzip(env *object.Environment, in, out *ast.Pipes, args ...object.Object) o
 				unzip.Filenames = append(unzip.Filenames, d)
 			}
 		default:
-			return object.NewError("argument %d not supported, got %s", i,
+			return nil, fmt.Errorf("argument %d not supported, got %s", i,
 				args[0].Type())
 		}
 	}
 
-	stdout, stderr := getWriters(out)
-	if unzip.isTest {
-		err := testItems(unzip.ZipFile, unzip.Filenames, stdout, stderr)
-		if err != nil {
-			return object.NewError(err.Error())
+	stdout, stderr := getWriters(scope.Out)
+	return func() object.Object {
+		if unzip.isTest {
+			err := testItems(unzip.ZipFile, unzip.Filenames, stdout, stderr)
+			if err != nil {
+				return object.NewError(err.Error())
+			}
+		} else {
+			err := unzipItems(unzip.ZipFile, unzip.destDir, unzip.Filenames, stderr)
+			if err != nil {
+				return object.NewError(err.Error())
+			}
 		}
-	} else {
-		err := unzipItems(unzip.ZipFile, unzip.destDir, unzip.Filenames, stderr)
-		if err != nil {
-			return object.NewError(err.Error())
-		}
-	}
-
-	return Null
+		return Null
+	}, nil
 }
 
 func testItems(zipfile string, includeFiles []string, outPipe io.Writer, errPipe io.Writer) error {
