@@ -9,7 +9,16 @@ import (
 	"github.com/laher/smoosh/ast"
 )
 
-type BuiltinFunction func(env *Environment, in, out *ast.Pipes, args ...Object) Object
+// Scope for a builtin function
+type Scope struct {
+	Env     *Environment
+	In, Out *ast.Pipes
+}
+
+// helper for async/sync versions of functions.
+type Operation func() Object
+
+type BuiltinFunction func(scope Scope, args ...Object) (Operation, error)
 
 type ObjectType string
 
