@@ -85,15 +85,14 @@ func grep(scope object.Scope, args ...object.Object) (object.Operation, error) {
 		return nil, fmt.Errorf(err.Error())
 	}
 	return func() object.Object {
-		stdout, _ := getWriters(scope.Out)
 		if len(grep.paths) > 0 {
-			err = grepAll(reg, grep.paths, grep, stdout)
+			err = grepAll(reg, grep.paths, grep, scope.Env.Streams.Stdout)
 			if err != nil {
 				return object.NewError(err.Error())
 			}
 		} else {
 			if scope.In != nil {
-				err = grepReader(scope.In.Out, "", reg, grep, stdout)
+				err = grepReader(scope.In.Out, "", reg, grep, scope.Env.Streams.Stdout)
 				if err != nil {
 					return object.NewError(err.Error())
 				}

@@ -53,15 +53,13 @@ func gunzip(scope object.Scope, args ...object.Object) (object.Operation, error)
 	}
 
 	return func() object.Object {
-		stdout, stderr := getWriters(scope.Out)
-		stdin := getReader(scope.In)
 		if gunzip.IsTest {
 			err := TestGzipItems(gunzip.Filenames)
 			if err != nil {
 				return object.NewError(err.Error())
 			}
 		} else {
-			err := gunzip.gunzipItems(stdin, stdout, stderr)
+			err := gunzip.gunzipItems(scope.Env.Streams.Stdin, scope.Env.Streams.Stdout, scope.Env.Streams.Stderr)
 			if err != nil {
 				return object.NewError(err.Error())
 			}

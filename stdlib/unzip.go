@@ -59,15 +59,14 @@ func unzip(scope object.Scope, args ...object.Object) (object.Operation, error) 
 		}
 	}
 
-	stdout, stderr := getWriters(scope.Out)
 	return func() object.Object {
 		if unzip.isTest {
-			err := testItems(unzip.ZipFile, unzip.Filenames, stdout, stderr)
+			err := testItems(unzip.ZipFile, unzip.Filenames, scope.Env.Streams.Stdout, scope.Env.Streams.Stderr)
 			if err != nil {
 				return object.NewError(err.Error())
 			}
 		} else {
-			err := unzipItems(unzip.ZipFile, unzip.destDir, unzip.Filenames, stderr)
+			err := unzipItems(unzip.ZipFile, unzip.destDir, unzip.Filenames, scope.Env.Streams.Stderr)
 			if err != nil {
 				return object.NewError(err.Error())
 			}

@@ -39,10 +39,8 @@ func which(scope object.Scope, args ...object.Object) (object.Operation, error) 
 			}
 		}
 	}
-	stdin := getReader(scope.In)
-	stdout, _ := getWriters(scope.Out)
 	return func() object.Object {
-		err := which.do(stdout, stdin)
+		err := which.do(scope.Env.Streams.Stdout, scope.Env.Streams.Stdin)
 		if err != nil {
 			return object.NewError(err.Error())
 		}

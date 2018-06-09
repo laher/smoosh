@@ -3,12 +3,9 @@ package stdlib
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"os"
 	"path/filepath"
 
 	"github.com/alecthomas/template"
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -68,28 +65,4 @@ func Interpolate(envV map[string]interface{}, value string) (string, error) {
 		return "", err
 	}
 	return buf.String(), nil
-}
-
-func getReader(in *ast.Pipes) io.ReadCloser {
-	if in != nil {
-		return in.Out
-	}
-	return nil
-}
-
-func getWriters(out *ast.Pipes) (io.WriteCloser, io.WriteCloser) {
-	var (
-		stdout io.WriteCloser = os.Stdout
-		stderr io.WriteCloser = os.Stderr
-	)
-	if out != nil {
-		r, w := io.Pipe()
-		stdout = w
-		out.Out = r // this will be closed by the evaluator
-
-		r, w = io.Pipe()
-		stderr = w
-		out.Err = r // this will be closed by the evaluator
-	}
-	return stdout, stderr
 }

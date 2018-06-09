@@ -95,10 +95,8 @@ func ls(scope object.Scope, args ...object.Object) (object.Operation, error) {
 		}
 	}
 
-	stdin := getReader(scope.In)
-	stdout, stderr := getWriters(scope.Out)
 	return func() object.Object {
-		err := ls.Go(stdin, stdout, stderr)
+		err := ls.Go(scope.Env.Streams)
 		if err != nil {
 			return object.NewError(err.Error())
 		}
@@ -107,10 +105,10 @@ func ls(scope object.Scope, args ...object.Object) (object.Operation, error) {
 }
 
 // Go actually runs the ls ...
-func (ls *Ls) Go(stdin io.Reader, stdout, stderr io.Writer) error {
-	tout := tabwriter.NewWriter(stdout, 4, 4, 1, ' ', 0)
+func (ls *Ls) Go(streams object.Streams) error {
+	tout := tabwriter.NewWriter(streams.Stdout, 4, 4, 1, ' ', 0)
 
-	args, err := getDirList(ls, stdin)
+	args, err := getDirList(ls, streams.Stdin)
 	if err != nil {
 		return err
 	}
@@ -122,11 +120,12 @@ func (ls *Ls) Go(stdin io.Reader, stdout, stderr io.Writer) error {
 			strings.HasPrefix(arg, "..") || "." == arg {
 			argInfo, err := os.Stat(arg)
 			if err != nil {
-				fmt.Fprintln(stderr, "stat failed for ", arg)
+				fmt.Fprintln(streams.Stderr, "stat failed for ", arg)
 				return err
 			}
 			if argInfo.IsDir() {
 				if len(args) > 1 { //if more than one, print dir name before contents
+
 					if i > 0 {
 						fmt.Fprintf(tout, "\n")
 					}
@@ -153,7 +152,7 @@ func (ls *Ls) Go(stdin io.Reader, stdout, stderr io.Writer) error {
 					}
 				}
 
-				err := list(tout, stderr, dir, "", ls)
+				err := list(tout, streams.Stderr, dir, "", ls)
 				if err != nil {
 					return err
 				}
@@ -161,8 +160,7 @@ func (ls *Ls) Go(stdin io.Reader, stdout, stderr io.Writer) error {
 					fmt.Fprintf(tout, "\n")
 				}
 			} else {
-
-				listItem(argInfo, tout, stderr, filepath.Dir(arg), "", ls)
+				listItem(argInfo, tout, streams.Stderr, filepath.Dir(arg), "", ls)
 			}
 			lastWasDir = argInfo.IsDir()
 		}
@@ -314,7 +312,7 @@ func getDirList(ls *Ls, inPipe io.Reader) ([]string, error) {
 			//defer bio.Close()
 			line, hasMoreInLine, err := bio.ReadLine()
 			if err == nil {
-				//adding from stdin
+				//adding from scope.Env.Streams.Stdin
 				globs = append(globs, strings.TrimSpace(string(line)))
 			} else {
 				//ok
@@ -322,7 +320,7 @@ func getDirList(ls *Ls, inPipe io.Reader) ([]string, error) {
 			for hasMoreInLine {
 				line, hasMoreInLine, err = bio.ReadLine()
 				if err == nil {
-					//adding from stdin
+					//adding from scope.Env.Streams.Stdin
 					globs = append(globs, string(line))
 				} else {
 					//finish

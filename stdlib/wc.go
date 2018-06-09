@@ -51,10 +51,8 @@ func wc(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			}
 		}
 	}
-	stdin := getReader(scope.In)
-	stdout, _ := getWriters(scope.Out)
 	return func() object.Object {
-		err := wc.do(stdout, stdin)
+		err := wc.do(scope.Env.Streams.Stdout, scope.Env.Streams.Stdin)
 		if err != nil {
 			return object.NewError(err.Error())
 		}

@@ -54,26 +54,25 @@ func gz(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	}
 
 	return func() object.Object {
-		stdout, _ := getWriters(scope.Out)
-		stdin := getReader(scope.In)
 		if len(gz.Filenames) < 1 {
 			//pipe in?
-			var writer io.WriteCloser
+			var writer io.Writer
 			var outputFilename string
 			if gz.outFile != "" {
 				outputFilename = gz.outFile
 				var err error
-				writer, err = os.Create(outputFilename)
+				w, err := os.Create(outputFilename)
 				if err != nil {
 					return object.NewError(err.Error())
 				}
-				defer writer.Close()
+				defer w.Close()
+				writer = w
 			} else {
-				//	fmt.Printf("stdin to stdout: %+v\n", gz)
+				//	fmt.Printf("scope.Env.Streams.Stdin to scope.Env.Streams.Stdout: %+v\n", gz)
 				outputFilename = "S" //seems to be the default used by gzip
-				writer = stdout
+				writer = scope.Env.Streams.Stdout
 			}
-			err := gz.doGzip(stdin, writer, filepath.Base(outputFilename))
+			err := gz.doGzip(scope.Env.Streams.Stdin, writer, filepath.Base(outputFilename))
 			if err != nil {
 				return object.NewError(err.Error())
 			}
@@ -96,7 +95,7 @@ func gz(scope object.Scope, args ...object.Object) (object.Operation, error) {
 					defer gzf.Close()
 					writer = gzf
 				} else {
-					writer = stdout
+					writer = scope.Env.Streams.Stdout
 				}
 				err = gz.doGzip(inputFile, writer, filepath.Base(inputFilename))
 				if err != nil {

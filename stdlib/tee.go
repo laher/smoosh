@@ -43,11 +43,8 @@ func tee(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			}
 		}
 	}
-	stdout, _ := getWriters(scope.Out)
-	stdin := getReader(scope.In)
-
 	return func() object.Object {
-		err = tee.do(stdout, stdin)
+		err = tee.do(scope.Env.Streams)
 		if err != nil {
 			return object.NewError(err.Error())
 		}
@@ -55,13 +52,13 @@ func tee(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	}, nil
 }
 
-func (tee *Tee) do(stdout io.WriteCloser, stdin io.ReadCloser) error {
+func (tee *Tee) do(streams object.Streams) error {
 	flag := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
 	if tee.isAppend {
 		flag = os.O_APPEND | os.O_WRONLY
 	}
 	closers := []io.WriteCloser{}
-	writers := []io.Writer{stdout}
+	writers := []io.Writer{streams.Stdout}
 	for _, file := range tee.args {
 		f, err := os.OpenFile(file, flag, 0666)
 		if err != nil {
@@ -72,7 +69,7 @@ func (tee *Tee) do(stdout io.WriteCloser, stdin io.ReadCloser) error {
 		closers = append(closers, f)
 	}
 	multiwriter := io.MultiWriter(writers...)
-	_, err := io.Copy(multiwriter, stdin)
+	_, err := io.Copy(multiwriter, streams.Stdin)
 	if err != nil {
 		return err
 	}

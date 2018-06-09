@@ -21,12 +21,8 @@ func echo(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			len(inputs))
 	}
 	return func() object.Object {
-		o, _ := getWriters(scope.Out)
 		w := strings.Join(inputs, " ")
-		fmt.Fprintf(o, "%s\n", w)
-		if scope.Out != nil {
-			o.Close()
-		}
+		fmt.Fprintf(scope.Env.Streams.Stdout, "%s\n", w)
 		return Null
 	}, nil
 

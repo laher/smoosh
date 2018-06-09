@@ -29,12 +29,11 @@ func dirname(scope object.Scope, args ...object.Object) (object.Operation, error
 	if len(fileNames) < 1 {
 		return nil, fmt.Errorf("Missing operand")
 	}
-	stdout, _ := getWriters(scope.Out)
 	return func() object.Object {
 		ret := &object.Array{}
 		myDirs := dirnames(fileNames)
 		for _, dir := range myDirs {
-			_, err := fmt.Fprintln(stdout, dir)
+			_, err := fmt.Fprintln(scope.Env.Streams.Stdout, dir)
 			if err != nil {
 				return object.NewError(err.Error())
 			}

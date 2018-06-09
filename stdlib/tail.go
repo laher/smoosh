@@ -63,10 +63,8 @@ func tail(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			}
 		}
 	}
-	stdout, _ := getWriters(scope.Out)
-	stdin := getReader(scope.In)
 	return func() object.Object {
-		err := tail.do(stdout, stdin)
+		err := tail.do(scope.Env.Streams.Stdout, scope.Env.Streams.Stdin)
 		if err != nil {
 			return object.NewError(err.Error())
 		}

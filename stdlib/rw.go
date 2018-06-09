@@ -100,7 +100,6 @@ func read(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	if err != nil {
 		return nil, err
 	}
-	stdout, _ := getWriters(scope.Out)
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	if scope.Out != nil {
@@ -110,7 +109,7 @@ func read(scope object.Scope, args ...object.Object) (object.Operation, error) {
 		}
 	}
 	return func() object.Object {
-		if _, err := io.Copy(stdout, f); err != nil {
+		if _, err := io.Copy(scope.Env.Streams.Stdout, f); err != nil {
 			//return object.NewError(err.Error())
 			panic(err.Error())
 		}

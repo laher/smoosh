@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
 )
 
@@ -57,7 +56,7 @@ func head(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	}
 
 	return func() object.Object {
-		err := head.do(scope.Out, scope.In)
+		err := head.do(scope.Env.Streams)
 		if err != nil {
 			return object.NewError(err.Error())
 		}
@@ -65,9 +64,7 @@ func head(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	}, nil
 }
 
-func (head *Head) do(out, in *ast.Pipes) error {
-	stdout, _ := getWriters(out)
-	stdin := getReader(in)
+func (head *Head) do(streams object.Streams) error {
 	if len(head.Filenames) > 0 {
 		for _, fileName := range head.Filenames {
 			file, err := os.Open(fileName)
@@ -75,7 +72,7 @@ func (head *Head) do(out, in *ast.Pipes) error {
 				return err
 			}
 			defer file.Close()
-			err = head.head(stdout, file)
+			err = head.head(streams.Stdout, file)
 			if err != nil {
 				return err
 			}
@@ -86,7 +83,7 @@ func (head *Head) do(out, in *ast.Pipes) error {
 		}
 	} else {
 		//stdin ..
-		err := head.head(stdout, stdin)
+		err := head.head(streams.Stdout, streams.Stdin)
 		if err != nil {
 			return err
 		}
@@ -94,7 +91,7 @@ func (head *Head) do(out, in *ast.Pipes) error {
 	return nil
 }
 
-func (head *Head) head(out io.WriteCloser, in io.ReadCloser) error {
+func (head *Head) head(out io.Writer, in io.Reader) error {
 	reader := bufio.NewReader(in)
 	lineNo := int64(1)
 	ch := '\n' //should this be an option?
