@@ -1,6 +1,7 @@
 package evaluator
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/laher/smoosh/lexer"
@@ -372,7 +373,7 @@ func TestBuiltinFunctions(t *testing.T) {
 		{`len("one", "two")`, "wrong number of arguments. got=2, want=1"},
 		{`len([1, 2, 3])`, 3},
 		{`len([])`, 0},
-		{`puts("hello", "world!")`, nil},
+		{`echo("hello", "world!")`, nil},
 		{`first([1, 2, 3])`, 1},
 		{`first([])`, nil},
 		{`first(1)`, "argument to `first` must be ARRAY, got INTEGER"},
@@ -386,41 +387,43 @@ func TestBuiltinFunctions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		evaluated := testEval(tt.input)
+		t.Run(tt.input, func(t *testing.T) {
+			evaluated := testEval(tt.input)
 
-		switch expected := tt.expected.(type) {
-		case int:
-			testIntegerObject(t, evaluated, int64(expected))
-		case nil:
-			testNullObject(t, evaluated)
-		case string:
-			errObj, ok := evaluated.(*object.Error)
-			if !ok {
-				t.Errorf("object is not Error. got=%T (%+v)",
-					evaluated, evaluated)
-				continue
-			}
-			if errObj.Message != expected {
-				t.Errorf("wrong error message. expected=%q, got=%q",
-					expected, errObj.Message)
-			}
-		case []int:
-			array, ok := evaluated.(*object.Array)
-			if !ok {
-				t.Errorf("obj not Array. got=%T (%+v)", evaluated, evaluated)
-				continue
-			}
+			switch expected := tt.expected.(type) {
+			case int:
+				testIntegerObject(t, evaluated, int64(expected))
+			case nil:
+				testNullObject(t, evaluated)
+			case string:
+				errObj, ok := evaluated.(*object.Error)
+				if !ok {
+					t.Errorf("object is not Error. got=%T (%+v)",
+						evaluated, evaluated)
+					return
+				}
+				if errObj.Message != expected {
+					t.Errorf("wrong error message. expected=%q, got=%q",
+						expected, errObj.Message)
+				}
+			case []int:
+				array, ok := evaluated.(*object.Array)
+				if !ok {
+					t.Errorf("obj not Array. got=%T (%+v)", evaluated, evaluated)
+					return
+				}
 
-			if len(array.Elements) != len(expected) {
-				t.Errorf("wrong num of elements. want=%d, got=%d",
-					len(expected), len(array.Elements))
-				continue
-			}
+				if len(array.Elements) != len(expected) {
+					t.Errorf("wrong num of elements. want=%d, got=%d",
+						len(expected), len(array.Elements))
+					return
+				}
 
-			for i, expectedElem := range expected {
-				testIntegerObject(t, array.Elements[i], int64(expectedElem))
+				for i, expectedElem := range expected {
+					testIntegerObject(t, array.Elements[i], int64(expectedElem))
+				}
 			}
-		}
+		})
 	}
 }
 
@@ -590,9 +593,13 @@ func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-	streams := object.Streams{}
-	env := object.NewEnvironment(streams)
 
+	streams := object.Streams{
+		Stdin:  bytes.NewBuffer([]byte(input)),
+		Stdout: bytes.NewBuffer([]byte{}),
+		Stderr: bytes.NewBuffer([]byte{}),
+	}
+	env := object.NewEnvironment(streams)
 	return Eval(program, env)
 }
 

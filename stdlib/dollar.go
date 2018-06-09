@@ -2,7 +2,7 @@ package stdlib
 
 import (
 	"fmt"
-	"os"
+	"io/ioutil"
 	"os/exec"
 	"strings"
 	"unicode"
@@ -39,31 +39,28 @@ func dollar(scope object.Scope, args ...object.Object) (object.Operation, error)
 		}
 	}
 	cmd := exec.Command(inputs[0], inputs[1:]...)
+	if scope.Out != nil {
+		stdOut, err := cmd.StdoutPipe()
+		if err != nil {
+			return nil, err
+		}
+		errOut, err := cmd.StderrPipe()
+		if err != nil {
+			return nil, err
+		}
+		// Use NopCloser - these would be closed by os/exec and would panic if closed again
+		scope.Out.Main = ioutil.NopCloser(stdOut)
+		scope.Out.Err = ioutil.NopCloser(errOut)
+	} else {
+		cmd.Stdout = scope.Env.Streams.Stdout
+		cmd.Stderr = scope.Env.Streams.Stderr
+	}
+	if scope.In != nil {
+		cmd.Stdin = scope.In.Main
+	} else {
+		cmd.Stdin = scope.Env.Streams.Stdin
+	}
 	return func() object.Object {
-		if scope.In != nil {
-			cmd.Stdin = scope.In.Main
-		}
-		if scope.Out != nil {
-			stdOut, err := cmd.StdoutPipe()
-			if err != nil {
-				return object.NewError(err.Error())
-			}
-			errOut, err := cmd.StderrPipe()
-			if err != nil {
-				return object.NewError(err.Error())
-			}
-			scope.Out.Main = stdOut
-			scope.Out.Err = errOut
-			scope.Out.Wait = cmd.Wait
-			err = cmd.Start()
-			if err != nil {
-				return object.NewError(err.Error())
-			}
-			p := object.Pipes(*scope.Out)
-			return &p
-		}
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
 		err := cmd.Run()
 		if err != nil {
 			return object.NewError(err.Error())

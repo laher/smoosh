@@ -50,6 +50,11 @@ func TestStdLib(t *testing.T) {
 			input:  `ls("testdata/hello.txt")`,
 			expOut: "hello.txt \n",
 		},
+		{
+			name:   "echo|ls",
+			input:  `echo("testdata/hello.txt")|ls()`,
+			expOut: "hello.txt \n",
+		},
 	}
 	for i := range tests {
 		test := tests[i]

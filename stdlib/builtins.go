@@ -53,16 +53,6 @@ var builtins = map[string]*object.Builtin{
 			}, nil
 		},
 	},
-	"puts": &object.Builtin{
-		Fn: func(scope object.Scope, args ...object.Object) (object.Operation, error) {
-			return func() object.Object {
-				for _, arg := range args {
-					fmt.Fprintln(scope.Env.Streams.Stdout, arg.Inspect())
-				}
-				return Null
-			}, nil
-		},
-	},
 	"first": &object.Builtin{
 		Fn: func(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			if len(args) != 1 {

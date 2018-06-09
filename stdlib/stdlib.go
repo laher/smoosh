@@ -17,10 +17,10 @@ var (
 func interpolateArgs(env *object.Environment, args []object.Object, glob bool) ([]string, error) {
 	inputs := []string{}
 	envV := env.Export()
-	for i, arg := range args {
-		switch argT := arg.(type) {
+	for i := range args {
+		switch arg := args[i].(type) {
 		case *object.String:
-			input, err := Interpolate(envV, argT.Value)
+			input, err := Interpolate(envV, arg.Value)
 			if err != nil {
 				return nil, fmt.Errorf("cannot parse arg for interpolation - %s",
 					err)
@@ -39,7 +39,7 @@ func interpolateArgs(env *object.Environment, args []object.Object, glob bool) (
 				inputs = append(inputs, input)
 			}
 		case *object.Integer:
-			input := fmt.Sprintf("%d", argT.Value)
+			input := fmt.Sprintf("%d", arg.Value)
 			inputs = append(inputs, input)
 		case *object.Null:
 			// ignore nulls
@@ -47,7 +47,7 @@ func interpolateArgs(env *object.Environment, args []object.Object, glob bool) (
 			// ignore flags here. Parse them separately
 		default:
 			return nil, fmt.Errorf("argument %d not supported, got %s",
-				i, argT.Type())
+				i, arg.Type())
 		}
 	}
 	return inputs, nil
