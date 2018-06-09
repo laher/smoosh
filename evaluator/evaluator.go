@@ -508,10 +508,10 @@ func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, e
 		if in != nil || out != nil {
 			myEnv = object.NewEnclosedEnvironment(env)
 			if in != nil {
-				myEnv.GlobalStreams.Stdin = getReader(in)
+				myEnv.Streams.Stdin = getReader(in)
 			}
 			if out != nil {
-				myEnv.GlobalStreams.Stdout, myEnv.GlobalStreams.Stderr = getWriters(out, env.GlobalStreams)
+				myEnv.Streams.Stdout, myEnv.Streams.Stderr = getWriters(out, env.Streams)
 			}
 		}
 		op, err := fn.Fn(object.Scope{
@@ -540,7 +540,7 @@ func getReader(in *ast.Pipes) io.ReadCloser {
 	return nil
 }
 
-func getWriters(out *ast.Pipes, streams object.GlobalStreams) (io.WriteCloser, io.WriteCloser) {
+func getWriters(out *ast.Pipes, streams object.Streams) (io.WriteCloser, io.WriteCloser) {
 	var (
 		stdout io.WriteCloser = os.Stdout
 		stderr io.WriteCloser = os.Stderr

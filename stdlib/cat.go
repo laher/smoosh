@@ -45,7 +45,7 @@ func cat(scope object.Scope, args ...object.Object) (object.Operation, error) {
 		}
 	}
 
-	op := catIt(scope.Env.GlobalStreams.Stdin, scope.Env.GlobalStreams.Stdout, fileNames, showEnds, number, squeezeBlank)
+	op := catIt(scope.Env.Streams.Stdin, scope.Env.Streams.Stdout, fileNames, showEnds, number, squeezeBlank)
 	return func() object.Object {
 		err := op()
 		if err != nil {

@@ -6,26 +6,26 @@ import (
 )
 
 func NewEnclosedEnvironment(outer *Environment) *Environment {
-	env := NewEnvironment(outer.GlobalStreams)
+	env := NewEnvironment(outer.Streams)
 	env.outer = outer
 	return env
 }
 
-func NewEnvironment(streams GlobalStreams) *Environment {
+func NewEnvironment(streams Streams) *Environment {
 	s := make(map[string]Object)
-	return &Environment{store: s, outer: nil, GlobalStreams: streams}
+	return &Environment{store: s, outer: nil, Streams: streams}
 }
 
-type GlobalStreams struct {
+type Streams struct {
 	Stdin  io.Reader
 	Stdout io.Writer
 	Stderr io.Writer
 }
 
 type Environment struct {
-	store         map[string]Object
-	outer         *Environment
-	GlobalStreams GlobalStreams
+	store   map[string]Object
+	outer   *Environment
+	Streams Streams
 }
 
 func (e *Environment) Export() map[string]interface{} {

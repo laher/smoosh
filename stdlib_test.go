@@ -21,12 +21,13 @@ func TestCatInt(t *testing.T) {
 			expOut: "hello\n",
 		},
 		{
-			name:   "cat",
-			input:  `cat("testdata/hello.txt")`,
-			expOut: "hello\n",
+			name:   "basename",
+			input:  `basename("testdata/hello.txt")`,
+			expOut: "hello.txt\n",
 		},
 	}
-	for _, test := range tests {
+	for i := range tests {
+		test := tests[i]
 		t.Run(test.name, func(t *testing.T) {
 			r := run.NewRunner()
 			rbuf := bytes.NewBuffer([]byte(test.input))

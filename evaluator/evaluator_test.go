@@ -590,7 +590,7 @@ func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-	streams := object.GlobalStreams{}
+	streams := object.Streams{}
 	env := object.NewEnvironment(streams)
 
 	return Eval(program, env)

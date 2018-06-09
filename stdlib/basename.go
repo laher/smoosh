@@ -45,12 +45,12 @@ func basename(scope object.Scope, args ...object.Object) (object.Operation, erro
 
 	return func() object.Object {
 		base := basenameFile(inputPath, relativeTo)
-		stdout, _ := getWriters(scope.Out)
-		_, err := fmt.Fprintln(stdout, base)
+		_, err := fmt.Fprintln(scope.Env.Streams.Stdout, base)
 		if err != nil {
 			return object.NewError(err.Error())
 		}
-		return &object.String{Value: base}
+		//return &object.String{Value: base}
+		return Null
 	}, nil
 }
 

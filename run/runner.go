@@ -40,7 +40,7 @@ func (r *Runner) RunFile(filename string, out io.Writer, stderr io.Writer) error
 
 // Run runs an io.Reader as a single program
 func (r *Runner) Run(rdr io.Reader, out io.Writer, stderr io.Writer) error {
-	streams := object.GlobalStreams{
+	streams := object.Streams{
 		Stdin:  rdr,
 		Stdout: out,
 		Stderr: stderr,
