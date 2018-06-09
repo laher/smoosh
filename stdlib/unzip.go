@@ -36,8 +36,8 @@ func unzip(scope object.Scope, args ...object.Object) (object.Operation, error) 
 	if err != nil {
 		return nil, err
 	}
-	if len(filenames) < 2 {
-		return nil, fmt.Errorf("Expected a zip filename and at least one filename")
+	if len(filenames) < 1 {
+		return nil, fmt.Errorf("Expected a zip filename")
 	}
 	unzip.ZipFile = filenames[0]
 	unzip.Filenames = filenames[1:]
@@ -184,7 +184,7 @@ func unzipItems(zipfile, destDir string, includeFiles []string, errPipe io.Write
 					}
 				}
 				//TODO remove on error
-				destFile, err := os.OpenFile(destFileName, os.O_CREATE, finf.Mode())
+				destFile, err := os.OpenFile(destFileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, finf.Mode())
 				defer destFile.Close()
 				if err != nil {
 					return err
