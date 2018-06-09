@@ -20,7 +20,7 @@ func cd(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	case *object.String:
 		d, err := Interpolate(scope.Env.Export(), arg.Value)
 		if err != nil {
-			return nil, fmt.Errorf(err.Error())
+			return nil, err
 		}
 		return func() object.Object {
 			err = os.Chdir(d)

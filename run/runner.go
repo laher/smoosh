@@ -79,7 +79,7 @@ func (r *Runner) runData(data string, out io.Writer, env, macroEnv *object.Envir
 
 			case *object.Pipes:
 				pipes := r
-				cmdOut, err := ioutil.ReadAll(pipes.Out)
+				cmdOut, err := ioutil.ReadAll(pipes.Main)
 				if err != nil {
 					return err
 				}

@@ -58,7 +58,7 @@ func write(scope object.Scope, args ...object.Object) (object.Operation, error) 
 				}
 				f.Close()
 			}()
-			if _, err := io.Copy(f, scope.In.Out); err != nil {
+			if _, err := io.Copy(f, scope.In.Main); err != nil {
 				if err != io.ErrClosedPipe {
 					return object.NewError(err.Error())
 				}

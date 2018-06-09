@@ -42,9 +42,17 @@ func basename(scope object.Scope, args ...object.Object) (object.Operation, erro
 	} else {
 		inputPath = myArgs[0]
 	}
+	/*
+		if scope.Out != nil {
+			r, w := io.Pipe()
+			scope.Env.Streams.Stdout = w // this will be closed by the evaluator
+			scope.Out.Main = r
+		}
+	*/
 
 	return func() object.Object {
 		base := basenameFile(inputPath, relativeTo)
+		//_, err := fmt.Fprintln(scope.Env.Streams.Stdout, base)
 		_, err := fmt.Fprintln(scope.Env.Streams.Stdout, base)
 		if err != nil {
 			return object.NewError(err.Error())

@@ -29,7 +29,7 @@ func get(scope object.Scope, args ...object.Object) (object.Operation, error) {
 				return object.NewError(err.Error())
 			}
 			if scope.Out != nil {
-				scope.Out.Out = resp.Body
+				scope.Out.Main = resp.Body
 				errStr := resp.Status + "\n\n"
 				for k, v := range resp.Header {
 					for _, h := range v {

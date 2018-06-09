@@ -25,7 +25,11 @@ func isPipedInput(in io.Reader) bool {
 
 // Start starts a line-by-line processor
 func (r *Runner) Start(in io.Reader, out io.Writer, stderr io.Writer) {
-	streams := object.Streams{in, out, stderr}
+	streams := object.Streams{
+		Stdin:  in,
+		Stdout: out,
+		Stderr: stderr,
+	}
 	scanner := bufio.NewScanner(in)
 	env := object.NewEnvironment(streams)
 	macroEnv := object.NewEnvironment(streams)

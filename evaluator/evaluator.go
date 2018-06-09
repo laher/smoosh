@@ -220,7 +220,7 @@ func shouldBePiping(statement ast.Statement) bool {
 func isPiping(statement ast.Statement) bool {
 	if expS, ok := statement.(*ast.ExpressionStatement); ok {
 		if c, ok := expS.Expression.(*ast.CallExpression); ok {
-			return c.Out != nil && c.Out.Out != nil
+			return c.Out != nil && c.Out.Main != nil
 		}
 	}
 	return false
@@ -234,6 +234,7 @@ func connectPipes(statements []ast.Statement) {
 				if p, ok := expS.Expression.(*ast.PipeExpression); ok {
 					//this is a pipe ... hook up the outs and ins
 					pipes := &ast.Pipes{}
+
 					if expS, ok := prev.(*ast.ExpressionStatement); ok {
 						if callS, ok := expS.Expression.(*ast.CallExpression); ok {
 							callS.Out = pipes
@@ -490,7 +491,7 @@ func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, e
 		if in != nil {
 			// defer guarantees this runs AFTER applyFunction.
 			// go guarantees that it doesn't block the next call
-			go in.WaitAndClose() // ensure cleanup always happens
+			//go in.WaitAndClose() // ensure cleanup always happens
 		}
 	}()
 	switch fn := fn.(type) {
@@ -508,10 +509,18 @@ func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, e
 		if in != nil || out != nil {
 			myEnv = object.NewEnclosedEnvironment(env)
 			if in != nil {
-				myEnv.Streams.Stdin = getReader(in)
+				if in.Main == nil {
+					panic("in.Main is nil")
+				}
+				myEnv.Streams.Stdin = in.Main
 			}
 			if out != nil {
-				myEnv.Streams.Stdout, myEnv.Streams.Stderr = getWriters(out, env.Streams)
+				r, w := io.Pipe()
+				myEnv.Streams.Stdout = w // this will be closed by the evaluator
+				out.Main = r
+				r, w = io.Pipe()
+				myEnv.Streams.Stderr = w // this will be closed by the evaluator
+				out.Err = r
 			}
 		}
 		op, err := fn.Fn(object.Scope{
@@ -522,11 +531,15 @@ func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, e
 		if err != nil {
 			return object.NewError(err.Error())
 		}
-		if out != nil {
-			// TODO doAsync
-			doAsync(op, out, nil)
-			return Null
+		if in != nil {
+			//		defer in.Main.Close()
+			//		defer in.Err.Close()
 		}
+		if out != nil {
+			doAsync(op, out, myEnv.Streams.Stderr)
+			return NULL
+		}
+
 		return op()
 	default:
 		return newError("not a function: %s", fn.Type())
@@ -535,7 +548,7 @@ func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, e
 
 func getReader(in *ast.Pipes) io.ReadCloser {
 	if in != nil {
-		return in.Out
+		return in.Main
 	}
 	return nil
 }
@@ -548,7 +561,7 @@ func getWriters(out *ast.Pipes, streams object.Streams) (io.WriteCloser, io.Writ
 	if out != nil {
 		r, w := io.Pipe()
 		stdout = w
-		out.Out = r // this will be closed by the evaluator
+		out.Main = r // this will be closed by the evaluator
 
 		r, w = io.Pipe()
 		stderr = w
@@ -557,12 +570,7 @@ func getWriters(out *ast.Pipes, streams object.Streams) (io.WriteCloser, io.Writ
 	return stdout, stderr
 }
 
-var (
-	// Null can be a single isntance for the app
-	Null = &object.Null{}
-)
-
-func doAsync(op object.Operation, out *ast.Pipes, stderr io.WriteCloser) {
+func doAsync(op object.Operation, out *ast.Pipes, stderr io.Writer) {
 	wg := sync.WaitGroup{}
 	out.Wait = func() error {
 		wg.Wait()
@@ -571,11 +579,13 @@ func doAsync(op object.Operation, out *ast.Pipes, stderr io.WriteCloser) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		defer out.Out.Close()
 		o := op()
 		if oe, ok := o.(*object.Error); ok {
-			//TODO stderr
-			fmt.Fprintln(stderr, oe.Message)
+			fmt.Fprintf(stderr, "Error returned from piped func: [%s]\n", oe.Message)
+		}
+		err := out.Main.Close()
+		if err != nil {
+			fmt.Fprintf(stderr, "Error closing pipe: [%s]\n", err)
 		}
 	}()
 

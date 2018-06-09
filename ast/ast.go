@@ -99,7 +99,7 @@ func (rs *ReturnStatement) String() string {
 
 // Pipes are the outcome of an exec'd command
 type Pipes struct {
-	Out  io.ReadCloser
+	Main io.ReadCloser
 	Err  io.ReadCloser
 	Wait func() error // Wait should be idempotent to allow for resource cleanup
 }
@@ -114,8 +114,8 @@ func (p *Pipes) WaitAndClose() error {
 	if p.Wait != nil {
 		err = p.Wait()
 	}
-	if p.Out != nil {
-		var err2 = p.Out.Close()
+	if p.Main != nil {
+		var err2 = p.Main.Close()
 		if err2 != nil && err == nil {
 			return err2
 		}

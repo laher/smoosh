@@ -92,7 +92,7 @@ func grep(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			}
 		} else {
 			if scope.In != nil {
-				err = grepReader(scope.In.Out, "", reg, grep, scope.Env.Streams.Stdout)
+				err = grepReader(scope.In.Main, "", reg, grep, scope.Env.Streams.Stdout)
 				if err != nil {
 					return object.NewError(err.Error())
 				}

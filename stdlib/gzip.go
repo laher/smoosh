@@ -138,13 +138,11 @@ func (gz *Gzip) doGzip(reader io.Reader, writer io.Writer, filename string) erro
 
 	_, err = io.Copy(gzw, rdr)
 	if err != nil {
-		fmt.Println("Copied err", err)
 		return err
 	}
 	//get error where possible
 	err = gzw.Close()
 	if err != nil {
-		fmt.Println("Closed err", err)
 		return err
 	}
 

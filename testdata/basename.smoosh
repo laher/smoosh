@@ -1,4 +1,6 @@
 var x = basename("x/y")
-if (x != "y") {
-  exit(1)
-}
+# TODO |ret()
+#echo("x:", x)
+#if (x != "\n") {
+#  exit(1)
+#}

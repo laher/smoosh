@@ -30,16 +30,16 @@ func dirname(scope object.Scope, args ...object.Object) (object.Operation, error
 		return nil, fmt.Errorf("Missing operand")
 	}
 	return func() object.Object {
-		ret := &object.Array{}
+		//ret := &object.Array{}
 		myDirs := dirnames(fileNames)
 		for _, dir := range myDirs {
 			_, err := fmt.Fprintln(scope.Env.Streams.Stdout, dir)
 			if err != nil {
 				return object.NewError(err.Error())
 			}
-			ret.Elements = append(ret.Elements, &object.String{Value: dir})
+			//ret.Elements = append(ret.Elements, &object.String{Value: dir})
 		}
-		return ret
+		return Null
 	}, nil
 }
 

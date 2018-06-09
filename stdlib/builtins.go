@@ -57,7 +57,7 @@ var builtins = map[string]*object.Builtin{
 		Fn: func(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			return func() object.Object {
 				for _, arg := range args {
-					fmt.Println(arg.Inspect())
+					fmt.Fprintln(scope.Env.Streams.Stdout, arg.Inspect())
 				}
 				return Null
 			}, nil

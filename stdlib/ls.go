@@ -115,6 +115,7 @@ func (ls *Ls) Go(streams object.Streams) error {
 
 	ls.counter = 0
 	lastWasDir := false
+	endswithNewline := false
 	for i, arg := range args {
 		if !strings.HasPrefix(arg, ".") || ls.AllFiles ||
 			strings.HasPrefix(arg, "..") || "." == arg {
@@ -152,71 +153,82 @@ func (ls *Ls) Go(streams object.Streams) error {
 					}
 				}
 
-				err := list(tout, streams.Stderr, dir, "", ls)
+				endswithNewline, err = list(tout, streams.Stderr, dir, "", ls)
 				if err != nil {
 					return err
 				}
 				if len(args) > 1 {
 					fmt.Fprintf(tout, "\n")
+					endswithNewline = true
 				}
 			} else {
-				listItem(argInfo, tout, streams.Stderr, filepath.Dir(arg), "", ls)
+				endswithNewline, err = listItem(argInfo, tout, streams.Stderr, filepath.Dir(arg), "", ls)
+				if err != nil {
+					return err
+				}
 			}
 			lastWasDir = argInfo.IsDir()
 		}
+	}
+	if !endswithNewline {
+		fmt.Fprintf(tout, "\n")
 	}
 	tout.Flush()
 	return nil
 }
 
-func list(out *tabwriter.Writer, errPipe io.Writer, dir, prefix string, ls *Ls) error {
+func list(out *tabwriter.Writer, errPipe io.Writer, dir, prefix string, ls *Ls) (bool, error) {
+	endswithNewline := false
 	if !strings.HasPrefix(dir, ".") || ls.AllFiles ||
 		strings.HasPrefix(dir, "..") || "." == dir {
 
 		entries, err := ioutil.ReadDir(dir)
 		if err != nil {
 			fmt.Fprintf(errPipe, "Error reading dir '%s'", dir)
-			return err
+			return endswithNewline, err
 		}
 		//dirs first, then files
 		for _, entry := range entries {
 			if entry.IsDir() {
-				err = listItem(entry, out, errPipe, dir, prefix, ls)
+				endswithNewline, err = listItem(entry, out, errPipe, dir, prefix, ls)
 				if err != nil {
-					return err
+					return endswithNewline, err
 				}
 			}
 		}
 		for _, entry := range entries {
 			if !entry.IsDir() {
-				err = listItem(entry, out, errPipe, dir, prefix, ls)
+				endswithNewline, err = listItem(entry, out, errPipe, dir, prefix, ls)
 				if err != nil {
-					return err
+					return endswithNewline, err
 				}
 			}
 		}
 	}
-	return nil
+	return endswithNewline, nil
 }
 
-func listItem(entry os.FileInfo, out *tabwriter.Writer, errPipe io.Writer, dir, prefix string, ls *Ls) error {
+func listItem(entry os.FileInfo, out *tabwriter.Writer, errPipe io.Writer, dir, prefix string, ls *Ls) (bool, error) {
+	endswithNewline := false
 	if !strings.HasPrefix(entry.Name(), ".") || ls.AllFiles {
 		printEntry(entry.Name(), entry, out, ls)
 		if entry.IsDir() && ls.Recursive {
 			folder := filepath.Join(prefix, entry.Name())
 			if ls.counter%3 == 2 || ls.LongList || ls.OnePerLine {
+				endswithNewline = true
 				fmt.Fprintf(out, "%s:\n", folder)
 			} else {
 				fmt.Fprintf(out, "%s:\t", folder)
 			}
-			ls.counter += 1
-			err := list(out, errPipe, filepath.Join(dir, entry.Name()), folder, ls)
+			ls.counter++
+			var err error
+			endswithNewline, err = list(out, errPipe, filepath.Join(dir, entry.Name()), folder, ls)
 			if err != nil {
-				return err
+				return endswithNewline, err
 			}
 		}
 	}
-	return nil
+	return endswithNewline, nil
 }
 
 func printEntry(name string, e os.FileInfo, out *tabwriter.Writer, ls *Ls) {
@@ -339,12 +351,11 @@ func getDirList(ls *Ls, inPipe io.Reader) ([]string, error) {
 			}
 
 			return args, nil
-		} else {
-			//NOT piping. Just use cwd by default.
-			cwd, err := os.Getwd()
-			return []string{cwd}, err
-
 		}
+		//NOT piping. Just use cwd by default.
+		cwd, err := os.Getwd()
+		return []string{cwd}, err
+
 	}
 	return ls.Filenames, nil
 }

@@ -41,7 +41,7 @@ func dollar(scope object.Scope, args ...object.Object) (object.Operation, error)
 	cmd := exec.Command(inputs[0], inputs[1:]...)
 	return func() object.Object {
 		if scope.In != nil {
-			cmd.Stdin = scope.In.Out
+			cmd.Stdin = scope.In.Main
 		}
 		if scope.Out != nil {
 			stdOut, err := cmd.StdoutPipe()
@@ -52,7 +52,7 @@ func dollar(scope object.Scope, args ...object.Object) (object.Operation, error)
 			if err != nil {
 				return object.NewError(err.Error())
 			}
-			scope.Out.Out = stdOut
+			scope.Out.Main = stdOut
 			scope.Out.Err = errOut
 			scope.Out.Wait = cmd.Wait
 			err = cmd.Start()
