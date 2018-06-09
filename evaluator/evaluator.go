@@ -3,6 +3,7 @@ package evaluator
 import (
 	"fmt"
 	"io"
+	"os"
 	"sync"
 
 	"github.com/laher/smoosh/ast"
@@ -500,7 +501,24 @@ func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, e
 		return unwrapReturnValue(evaluated)
 
 	case *object.Builtin:
-		op, err := fn.Fn(object.Scope{env, in, out}, args...)
+		// if dollar, don't set up stdin
+		//	stdin := getReader(in)
+		//	stdout, stderr := getWriters(out, env.GlobalStreams)
+		myEnv := env
+		if in != nil || out != nil {
+			myEnv = object.NewEnclosedEnvironment(env)
+			if in != nil {
+				myEnv.GlobalStreams.Stdin = getReader(in)
+			}
+			if out != nil {
+				myEnv.GlobalStreams.Stdout, myEnv.GlobalStreams.Stderr = getWriters(out, env.GlobalStreams)
+			}
+		}
+		op, err := fn.Fn(object.Scope{
+			Env: myEnv,
+			In:  in,
+			Out: out,
+		}, args...)
 		if err != nil {
 			return object.NewError(err.Error())
 		}
@@ -513,6 +531,30 @@ func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, e
 	default:
 		return newError("not a function: %s", fn.Type())
 	}
+}
+
+func getReader(in *ast.Pipes) io.ReadCloser {
+	if in != nil {
+		return in.Out
+	}
+	return nil
+}
+
+func getWriters(out *ast.Pipes, streams object.GlobalStreams) (io.WriteCloser, io.WriteCloser) {
+	var (
+		stdout io.WriteCloser = os.Stdout
+		stderr io.WriteCloser = os.Stderr
+	)
+	if out != nil {
+		r, w := io.Pipe()
+		stdout = w
+		out.Out = r // this will be closed by the evaluator
+
+		r, w = io.Pipe()
+		stderr = w
+		out.Err = r // this will be closed by the evaluator
+	}
+	return stdout, stderr
 }
 
 var (

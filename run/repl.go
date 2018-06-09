@@ -24,10 +24,11 @@ func isPipedInput(in io.Reader) bool {
 }
 
 // Start starts a line-by-line processor
-func (r *Runner) Start(in io.Reader, out io.Writer) {
+func (r *Runner) Start(in io.Reader, out io.Writer, stderr io.Writer) {
+	streams := object.GlobalStreams{in, out, stderr}
 	scanner := bufio.NewScanner(in)
-	env := object.NewEnvironment()
-	macroEnv := object.NewEnvironment()
+	env := object.NewEnvironment(streams)
+	macroEnv := object.NewEnvironment(streams)
 	user, err := user.Current()
 	if err != nil {
 		panic(err)

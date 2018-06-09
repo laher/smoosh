@@ -17,7 +17,8 @@ func TestDefineMacros(t *testing.T) {
 	var mymacroTwo = macro(x, y) { x + y; };
 	`
 
-	env := object.NewEnvironment()
+	streams := object.GlobalStreams{}
+	env := object.NewEnvironment(streams)
 	program := testParseProgram(input)
 
 	DefineMacros(program, env)
@@ -102,11 +103,12 @@ func TestExpandMacros(t *testing.T) {
 		},
 	}
 
+	streams := object.GlobalStreams{}
 	for _, tt := range tests {
 		expected := testParseProgram(tt.expected)
 		program := testParseProgram(tt.input)
 
-		env := object.NewEnvironment()
+		env := object.NewEnvironment(streams)
 		DefineMacros(program, env)
 		expanded := ExpandMacros(program, env)
 

@@ -2,22 +2,30 @@ package object
 
 import (
 	"fmt"
+	"io"
 )
 
 func NewEnclosedEnvironment(outer *Environment) *Environment {
-	env := NewEnvironment()
+	env := NewEnvironment(outer.GlobalStreams)
 	env.outer = outer
 	return env
 }
 
-func NewEnvironment() *Environment {
+func NewEnvironment(streams GlobalStreams) *Environment {
 	s := make(map[string]Object)
-	return &Environment{store: s, outer: nil}
+	return &Environment{store: s, outer: nil, GlobalStreams: streams}
+}
+
+type GlobalStreams struct {
+	Stdin  io.Reader
+	Stdout io.Writer
+	Stderr io.Writer
 }
 
 type Environment struct {
-	store map[string]Object
-	outer *Environment
+	store         map[string]Object
+	outer         *Environment
+	GlobalStreams GlobalStreams
 }
 
 func (e *Environment) Export() map[string]interface{} {

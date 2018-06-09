@@ -31,11 +31,11 @@ func main() {
 	}
 
 	if len(flag.Args()) == 0 {
-		runner.Start(os.Stdin, os.Stdout)
+		runner.Start(os.Stdin, os.Stdout, os.Stderr)
 		return
 	}
 	// Run a Smoosh script
-	if err := runner.RunFile(flag.Arg(0), os.Stdout); err != nil {
+	if err := runner.RunFile(flag.Arg(0), os.Stdout, os.Stderr); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

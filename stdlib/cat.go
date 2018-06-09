@@ -45,9 +45,7 @@ func cat(scope object.Scope, args ...object.Object) (object.Operation, error) {
 		}
 	}
 
-	stdin := getReader(scope.In)
-	stdout, _ := getWriters(scope.Out)
-	op := catIt(stdin, stdout, fileNames, showEnds, number, squeezeBlank)
+	op := catIt(scope.Env.GlobalStreams.Stdin, scope.Env.GlobalStreams.Stdout, fileNames, showEnds, number, squeezeBlank)
 	return func() object.Object {
 		err := op()
 		if err != nil {

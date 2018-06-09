@@ -29,24 +29,28 @@ type Runner struct {
 }
 
 // RunFile runs a file as a single program
-func (r *Runner) RunFile(filename string, out io.Writer) error {
+func (r *Runner) RunFile(filename string, out io.Writer, stderr io.Writer) error {
 	f, err := os.Open(filename)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	return r.Run(f, out)
+	return r.Run(f, out, stderr)
 }
 
 // Run runs an io.Reader as a single program
-func (r *Runner) Run(rdr io.Reader, out io.Writer) error {
-
+func (r *Runner) Run(rdr io.Reader, out io.Writer, stderr io.Writer) error {
+	streams := object.GlobalStreams{
+		Stdin:  rdr,
+		Stdout: out,
+		Stderr: stderr,
+	}
 	data, err := ioutil.ReadAll(rdr)
 	if err != nil {
 		return fmt.Errorf("could not read: %v", err)
 	}
-	env := object.NewEnvironment()
-	macroEnv := object.NewEnvironment()
+	env := object.NewEnvironment(streams)
+	macroEnv := object.NewEnvironment(streams)
 	return r.runData(string(data), out, env, macroEnv)
 }
 

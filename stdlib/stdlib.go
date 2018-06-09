@@ -33,6 +33,10 @@ func interpolateArgs(env *object.Environment, args []object.Object, glob bool) (
 				if err != nil {
 					return nil, err
 				}
+				if len(ss) == 0 {
+					inputs = append(inputs, input)
+					break
+				}
 				inputs = append(inputs, ss...)
 			} else {
 				inputs = append(inputs, input)
