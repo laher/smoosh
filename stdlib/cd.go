@@ -16,10 +16,6 @@ func cd(scope object.Scope, args ...object.Object) (object.Operation, error) {
 		return nil, fmt.Errorf("wrong number of arguments. got=%d, want=1",
 			len(args))
 	}
-	if args[0].Type() != object.STRING_OBJ {
-		return nil, fmt.Errorf("argument to `cd` must be STRING, got %s",
-			args[0].Type())
-	}
 	switch arg := args[0].(type) {
 	case *object.String:
 		d, err := Interpolate(scope.Env.Export(), arg.Value)

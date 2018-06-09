@@ -25,7 +25,10 @@ func init() {
 
 func cat(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	var showEnds, number, squeezeBlank bool
-	var fileNames = []string{}
+	fileNames, err := interpolateArgs(scope.Env, args, true)
+	if err != nil {
+		return nil, err
+	}
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
@@ -39,15 +42,6 @@ func cat(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			default:
 				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
-		case *object.String:
-			d, err := Interpolate(scope.Env.Export(), arg.Value)
-			if err != nil {
-				return nil, fmt.Errorf(err.Error())
-			}
-			fileNames = append(fileNames, d)
-		default:
-			return nil, fmt.Errorf("argument %d not supported, got %s", i,
-				args[0].Type())
 		}
 	}
 

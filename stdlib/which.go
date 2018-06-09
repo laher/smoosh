@@ -23,6 +23,11 @@ func init() {
 
 func which(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	which := Which{}
+	var err error
+	which.args, err = interpolateArgs(scope.Env, args, true)
+	if err != nil {
+		return nil, err
+	}
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
@@ -32,17 +37,6 @@ func which(scope object.Scope, args ...object.Object) (object.Operation, error) 
 			default:
 				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
-
-		case *object.String:
-			//Filenames (globs):
-			d, err := Interpolate(scope.Env.Export(), arg.Value)
-			if err != nil {
-				return nil, fmt.Errorf(err.Error())
-			}
-			which.args = append(which.args, d)
-		default:
-			return nil, fmt.Errorf("argument %d not supported, got %s", i,
-				args[0].Type())
 		}
 	}
 	stdin := getReader(scope.In)

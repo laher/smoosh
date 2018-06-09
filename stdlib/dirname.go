@@ -15,29 +15,24 @@ func init() {
 }
 
 func dirname(scope object.Scope, args ...object.Object) (object.Operation, error) {
-	myArgs := []string{}
+	fileNames, err := interpolateArgs(scope.Env, args, true)
+	if err != nil {
+		return nil, err
+	}
+
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
 			return nil, fmt.Errorf("flag %s not supported", arg.Name)
-		case *object.String:
-			d, err := Interpolate(scope.Env.Export(), arg.Value)
-			if err != nil {
-				return nil, fmt.Errorf(err.Error())
-			}
-			myArgs = append(myArgs, d)
-		default:
-			return nil, fmt.Errorf("argument %d not supported, got %s", i,
-				args[0].Type())
 		}
 	}
-	if len(myArgs) < 1 {
+	if len(fileNames) < 1 {
 		return nil, fmt.Errorf("Missing operand")
 	}
+	stdout, _ := getWriters(scope.Out)
 	return func() object.Object {
-		stdout, _ := getWriters(scope.Out)
 		ret := &object.Array{}
-		myDirs := dirnames(myArgs)
+		myDirs := dirnames(fileNames)
 		for _, dir := range myDirs {
 			_, err := fmt.Fprintln(stdout, dir)
 			if err != nil {

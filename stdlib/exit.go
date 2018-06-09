@@ -18,10 +18,6 @@ func exit(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	}
 	code := 0
 	if len(args) == 1 {
-		if args[0].Type() != object.INTEGER_OBJ {
-			return nil, fmt.Errorf("argument to `exit` must be INTEGER, got %s",
-				args[0].Type())
-		}
 		switch arg := args[0].(type) {
 		case *object.Integer:
 			code = int(arg.Value)

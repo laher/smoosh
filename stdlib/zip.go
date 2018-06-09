@@ -11,52 +11,21 @@ import (
 )
 
 func init() {
-	var opts = []object.Flag{
-		object.Flag{Name: "t", Help: "Test archive data"},
-	}
 	RegisterBuiltin("zip", &object.Builtin{
-		Fn:    z,
-		Flags: opts,
+		Fn: z,
 	})
 }
 
-// Zip represents and performs `gz` invocations
-type Zip struct {
-	Filenames []string
-	test      bool
-	outFile   string
-}
-
 func z(scope object.Scope, args ...object.Object) (object.Operation, error) {
-	gz := &Zip{}
-	for i := range args {
-		switch arg := args[i].(type) {
-		case *object.Flag:
-			switch arg.Name {
-			case "t":
-				gz.test = true
-			default:
-				return nil, fmt.Errorf("flag %s not supported", arg.Name)
-			}
-
-		case *object.String:
-			//Filenames (globs):
-			d, err := Interpolate(scope.Env.Export(), arg.Value)
-			if err != nil {
-				return nil, fmt.Errorf(err.Error())
-			}
-			gz.Filenames = append(gz.Filenames, d)
-		default:
-			return nil, fmt.Errorf("argument %d not supported, got %s", i,
-				args[0].Type())
-		}
+	filenames, err := interpolateArgs(scope.Env, args, true)
+	if err != nil {
+		return nil, err
 	}
-
-	if len(gz.Filenames) < 2 {
+	if len(filenames) < 2 {
 		return nil, fmt.Errorf("Fewer than 2 filenames given")
 	}
-	zipFilename := gz.Filenames[0]
-	itemsToArchive := gz.Filenames[1:]
+	zipFilename := filenames[0]
+	itemsToArchive := filenames[1:]
 	return func() object.Object {
 		err := zipItems(zipFilename, itemsToArchive)
 		if err != nil {

@@ -19,47 +19,31 @@ func init() {
 	})
 }
 
-// Rm represents and performs a `rm` invocation
-type Rm struct {
-	IsRecursive bool
-	fileGlobs   []string
-}
-
 func rm(scope object.Scope, args ...object.Object) (object.Operation, error) {
-	rm := Rm{}
+	var (
+		allFiles    []string
+		err         error
+		isRecursive bool
+	)
+	allFiles, err = interpolateArgs(scope.Env, args, true)
+	if err != nil {
+		return nil, err
+	}
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
 			switch arg.Name {
 			case "r": //follow by name
-				rm.IsRecursive = true
+				isRecursive = true
 			default:
 				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
-		case *object.String:
-			//Filenames (globs):
-			d, err := Interpolate(scope.Env.Export(), arg.Value)
-			if err != nil {
-				return nil, fmt.Errorf(err.Error())
-			}
-			rm.fileGlobs = append(rm.fileGlobs, d)
-		default:
-			return nil, fmt.Errorf("argument %d not supported, got %s", i,
-				args[0].Type())
 		}
 	}
 
-	allFiles := []string{}
-	for _, fileGlob := range rm.fileGlobs {
-		files, err := filepath.Glob(fileGlob)
-		if err != nil {
-			return nil, fmt.Errorf(err.Error())
-		}
-		allFiles = append(allFiles, files...)
-	}
 	return func() object.Object {
 		for _, file := range allFiles {
-			err := deleteFile(file, rm.IsRecursive)
+			err := deleteFile(file, isRecursive)
 			if err != nil {
 				return object.NewError(err.Error())
 			}

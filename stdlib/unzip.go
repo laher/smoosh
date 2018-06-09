@@ -32,6 +32,15 @@ type Unzip struct {
 
 func unzip(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	unzip := &Unzip{destDir: "."}
+	filenames, err := interpolateArgs(scope.Env, args, true)
+	if err != nil {
+		return nil, err
+	}
+	if len(filenames) < 2 {
+		return nil, fmt.Errorf("Expected a zip filename and at least one filename")
+	}
+	unzip.ZipFile = filenames[0]
+	unzip.Filenames = filenames[1:]
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
@@ -47,21 +56,6 @@ func unzip(scope object.Scope, args ...object.Object) (object.Operation, error) 
 			default:
 				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
-
-		case *object.String:
-			//Filenames (globs):
-			d, err := Interpolate(scope.Env.Export(), arg.Value)
-			if err != nil {
-				return nil, fmt.Errorf(err.Error())
-			}
-			if unzip.ZipFile == "" {
-				unzip.ZipFile = d
-			} else {
-				unzip.Filenames = append(unzip.Filenames, d)
-			}
-		default:
-			return nil, fmt.Errorf("argument %d not supported, got %s", i,
-				args[0].Type())
 		}
 	}
 

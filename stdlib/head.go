@@ -35,6 +35,11 @@ func (head *Head) Name() string {
 // Exec actually performs the head
 func head(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	head := &Head{lines: 10}
+	var err error
+	head.Filenames, err = interpolateArgs(scope.Env, args, true)
+	if err != nil {
+		return nil, err
+	}
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
@@ -48,19 +53,6 @@ func head(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			default:
 				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
-		case *object.String:
-			//Filenames (globs):
-			d, err := Interpolate(scope.Env.Export(), arg.Value)
-			if err != nil {
-				return nil, err
-			}
-			head.Filenames = append(head.Filenames, d)
-		case *object.Integer:
-			// oops
-			head.lines = arg.Value
-		default:
-			return nil, fmt.Errorf("argument %d not supported, got %s", i,
-				args[0].Type())
 		}
 	}
 

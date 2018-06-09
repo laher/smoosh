@@ -21,8 +21,11 @@ func init() {
 }
 
 func cp(scope object.Scope, args ...object.Object) (object.Operation, error) {
+	srces, err := interpolateArgs(scope.Env, args, true)
+	if err != nil {
+		return nil, err
+	}
 	var (
-		srces     []string
 		dest      string
 		recursive bool
 	)
@@ -35,23 +38,6 @@ func cp(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			default:
 				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
-		case *object.String:
-			d, err := Interpolate(scope.Env.Export(), arg.Value)
-			if err != nil {
-				return nil, fmt.Errorf(err.Error())
-			}
-			if i+1 < len(args) {
-				ss, err := filepath.Glob(d)
-				if err != nil {
-					return nil, fmt.Errorf(err.Error())
-				}
-				srces = append(srces, ss...)
-			} else {
-				dest = d
-			}
-		default:
-			return nil, fmt.Errorf("argument %d not supported, got %s", i,
-				args[0].Type())
 		}
 	}
 	return func() object.Object {

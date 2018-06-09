@@ -33,6 +33,11 @@ type Tail struct {
 
 func tail(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	tail := &Tail{SleepInterval: 1.0}
+	var err error
+	tail.Filenames, err = interpolateArgs(scope.Env, args, true)
+	if err != nil {
+		return nil, err
+	}
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
@@ -56,16 +61,6 @@ func tail(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			default:
 				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
-		case *object.String:
-			//Filenames (globs):
-			d, err := Interpolate(scope.Env.Export(), arg.Value)
-			if err != nil {
-				return nil, fmt.Errorf(err.Error())
-			}
-			tail.Filenames = append(tail.Filenames, d)
-		default:
-			return nil, fmt.Errorf("argument %d not supported, got %s", i,
-				args[0].Type())
 		}
 	}
 	stdout, _ := getWriters(scope.Out)

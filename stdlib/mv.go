@@ -17,30 +17,22 @@ func init() {
 
 func mv(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	var (
-		srcGlobs []string
-		dest     string
+		srcs []string
+		dest string
+		err  error
 	)
+	srcs, err = interpolateArgs(scope.Env, args, true)
+	if err != nil {
+		return nil, err
+	}
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
 			return nil, fmt.Errorf("flag %s not supported", arg.Name)
-		case *object.String:
-			d, err := Interpolate(scope.Env.Export(), arg.Value)
-			if err != nil {
-				return nil, err
-			}
-			if i+1 < len(args) {
-				srcGlobs = append(srcGlobs, d)
-			} else {
-				dest = d
-			}
-		default:
-			return nil, fmt.Errorf("argument %d not supported, got %s", i,
-				args[0].Type())
 		}
 	}
 	return func() object.Object {
-		for _, src := range srcGlobs {
+		for _, src := range srcs {
 			err := moveFile(src, dest)
 			if err != nil {
 				return object.NewError(err.Error())

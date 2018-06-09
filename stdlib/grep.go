@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -42,14 +41,17 @@ type Grep struct {
 	LinesAround       int  // TODO
 
 	pattern string
-	globs   []string
+	paths   []string
 }
 
 func grep(scope object.Scope, args ...object.Object) (object.Operation, error) {
 
 	grep := &Grep{}
-	myArgs := []string{}
-	exp := scope.Env.Export()
+	var err error
+	myArgs, err := interpolateArgs(scope.Env, args, true)
+	if err != nil {
+		return nil, err
+	}
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
@@ -69,22 +71,13 @@ func grep(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			default:
 				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
-		case *object.String:
-			d, err := Interpolate(exp, arg.Value)
-			if err != nil {
-				return nil, fmt.Errorf(err.Error())
-			}
-			myArgs = append(myArgs, d)
-		default:
-			return nil, fmt.Errorf("argument %d not supported, got %s", i,
-				args[0].Type())
 		}
 	}
 	if len(myArgs) < 1 {
 		return nil, fmt.Errorf("Missing operand")
 	}
 	if len(myArgs) > 1 {
-		grep.globs = myArgs[1:]
+		grep.paths = myArgs[1:]
 	}
 	grep.pattern = myArgs[0]
 	reg, err := compile(grep)
@@ -93,19 +86,8 @@ func grep(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	}
 	return func() object.Object {
 		stdout, _ := getWriters(scope.Out)
-		if len(grep.globs) > 0 {
-			files := []string{}
-			for _, glob := range grep.globs {
-				results, err := filepath.Glob(glob)
-				if err != nil {
-					return object.NewError(err.Error())
-				}
-				if len(results) < 1 { //no match
-					return object.NewError("grep: cannot access %s: No such file or directory", glob)
-				}
-				files = append(files, results...)
-			}
-			err = grepAll(reg, files, grep, stdout)
+		if len(grep.paths) > 0 {
+			err = grepAll(reg, grep.paths, grep, stdout)
 			if err != nil {
 				return object.NewError(err.Error())
 			}

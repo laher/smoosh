@@ -40,7 +40,7 @@ type Ls struct {
 
 	Stdin bool
 
-	globs []string
+	Filenames []string
 
 	counter int
 }
@@ -69,6 +69,12 @@ func ls(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	if scope.In != nil {
 		ls.Stdin = true
 	}
+	var err error
+	ls.Filenames, err = interpolateArgs(scope.Env, args, true)
+	if err != nil {
+		return nil, err
+	}
+
 	for i := range args {
 		switch arg := args[i].(type) {
 		case *object.Flag:
@@ -86,15 +92,6 @@ func ls(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			default:
 				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
-		case *object.String:
-			d, err := Interpolate(scope.Env.Export(), arg.Value)
-			if err != nil {
-				return nil, err
-			}
-			ls.globs = append(ls.globs, d)
-		default:
-			return nil, fmt.Errorf("argument %d not supported, got %s", i,
-				args[0].Type())
 		}
 	}
 
@@ -309,15 +306,16 @@ func getUserString(id int) string {
 }
 
 func getDirList(ls *Ls, inPipe io.Reader) ([]string, error) {
-	if len(ls.globs) <= 0 {
+	if len(ls.Filenames) <= 0 {
 		if ls.Stdin {
+			globs := []string{}
 			//check STDIN
 			bio := bufio.NewReader(inPipe)
 			//defer bio.Close()
 			line, hasMoreInLine, err := bio.ReadLine()
 			if err == nil {
 				//adding from stdin
-				ls.globs = append(ls.globs, strings.TrimSpace(string(line)))
+				globs = append(globs, strings.TrimSpace(string(line)))
 			} else {
 				//ok
 			}
@@ -325,28 +323,30 @@ func getDirList(ls *Ls, inPipe io.Reader) ([]string, error) {
 				line, hasMoreInLine, err = bio.ReadLine()
 				if err == nil {
 					//adding from stdin
-					ls.globs = append(ls.globs, string(line))
+					globs = append(globs, string(line))
 				} else {
 					//finish
 				}
 			}
+			args := []string{}
+			for _, glob := range globs {
+				results, err := filepath.Glob(glob)
+				if err != nil {
+					return args, err
+				}
+				if len(results) < 1 { //no match
+					return args, errors.New("ls: cannot access " + glob + ": No such file or directory")
+				}
+				args = append(args, results...)
+			}
+
+			return args, nil
 		} else {
 			//NOT piping. Just use cwd by default.
 			cwd, err := os.Getwd()
 			return []string{cwd}, err
-		}
-	}
 
-	args := []string{}
-	for _, glob := range ls.globs {
-		results, err := filepath.Glob(glob)
-		if err != nil {
-			return args, err
 		}
-		if len(results) < 1 { //no match
-			return args, errors.New("ls: cannot access " + glob + ": No such file or directory")
-		}
-		args = append(args, results...)
 	}
-	return args, nil
+	return ls.Filenames, nil
 }

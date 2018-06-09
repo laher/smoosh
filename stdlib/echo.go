@@ -3,7 +3,6 @@ package stdlib
 import (
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/laher/smoosh/object"
 )
@@ -21,26 +20,12 @@ func echo(scope object.Scope, args ...object.Object) (object.Operation, error) {
 		return nil, fmt.Errorf("wrong number of arguments. got=%d, want=1 or 2",
 			len(inputs))
 	}
-
-	wg := sync.WaitGroup{}
-	if scope.Out != nil {
-		wg.Add(1)
-		scope.Out.Wait = func() error {
-			wg.Wait()
-			return nil
-		}
-	}
 	return func() object.Object {
 		o, _ := getWriters(scope.Out)
 		w := strings.Join(inputs, " ")
+		fmt.Fprintf(o, "%s\n", w)
 		if scope.Out != nil {
-			go func() {
-				fmt.Fprintf(o, "%s\n", w)
-				o.Close()
-				wg.Done()
-			}()
-		} else {
-			fmt.Fprintf(o, "%s\n", w)
+			o.Close()
 		}
 		return Null
 	}, nil
