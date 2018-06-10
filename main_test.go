@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -20,7 +21,9 @@ func TestGood(t *testing.T) {
 		t.Run(f, func(t *testing.T) {
 			//in case of directory changes in-script
 			_ = os.Chdir(pwd)
-			err := runner.RunFile(f, os.Stdout, os.Stderr)
+			wbuf := bytes.NewBuffer([]byte{})
+			ebuf := bytes.NewBuffer([]byte{})
+			err := runner.RunFile(f, wbuf, ebuf)
 			if err != nil {
 				t.Errorf("Failed to run file: %v", err)
 			}
@@ -40,7 +43,9 @@ func TestBad(t *testing.T) {
 		t.Run(f, func(t *testing.T) {
 			//in case of directory changes in-script
 			_ = os.Chdir(pwd)
-			err := runner.RunFile(f, os.Stdout, os.Stderr)
+			wbuf := bytes.NewBuffer([]byte{})
+			ebuf := bytes.NewBuffer([]byte{})
+			err := runner.RunFile(f, wbuf, ebuf)
 			if err != nil {
 				t.Logf("Error as expected ... '%s'", err)
 				return
