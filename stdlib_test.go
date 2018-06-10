@@ -84,6 +84,7 @@ func TestStdLibNonDestructive(t *testing.T) {
 			expOut: "testdata/hello.txt:hello\n",
 		},
 	}
+	createFile(t, "testdata/hello.txt", "hello\n")
 	for i := range tests {
 		test := tests[i]
 		t.Run(test.name, func(t *testing.T) {
@@ -121,17 +122,43 @@ func createFile(t *testing.T, name string, content string) {
 	}
 }
 
-func checkFile(t *testing.T, name string, content string) {
-	f2, err := os.Open("testdata/tmp2.txt")
+func checkFileExists(t *testing.T, name string) {
+	_, err := os.Stat(name)
 	if err != nil {
 		t.Errorf("Couldnt stat file [%v]", err)
 		return
 	}
-	b, err := ioutil.ReadAll(f2)
-	if string(b) != content {
-		t.Errorf("Couldnt stat file [%v]", err)
+}
+
+func checkFileNotExists(t *testing.T, name string) {
+	_, err := os.Stat(name)
+	if !os.IsNotExist(err) {
+		t.Errorf("File exists/other-error [%v]", err)
+		return
 	}
 }
+
+func checkFile(t *testing.T, name string, expected string) {
+	f2, err := os.Open(name)
+	if err != nil {
+		t.Errorf("Couldn't stat file [%v]", err)
+		return
+	}
+	defer f2.Close()
+	b, err := ioutil.ReadAll(f2)
+	if string(b) != expected {
+		t.Errorf("Content [%s] did not match. Expected: [%s]", string(b), expected)
+	}
+}
+
+func deleteFileIfExists(t *testing.T, name string) {
+	_, err := os.Stat(name)
+	if os.IsNotExist(err) {
+		return
+	}
+	deleteFile(t, name)
+}
+
 func deleteFile(t *testing.T, name string) {
 	err := os.Remove(name)
 	if err != nil {
@@ -172,6 +199,30 @@ func TestStdLibDestructive(t *testing.T) {
 				checkFile(t, "testdata/tmp2.txt", "abcabcabc")
 				deleteFile(t, "testdata/tmp.txt")
 				deleteFile(t, "testdata/tmp2.txt")
+			},
+		},
+		{
+			name:  "gzip",
+			input: `cd("testdata"); gzip("tmp.txt"); cd("..")`,
+			setup: func() {
+				createFile(t, "testdata/tmp.txt", "abcabcabc")
+			},
+			check: func(mbuf io.Reader, ebuf io.Reader, runErr error) {
+				checkFileExists(t, "testdata/tmp.txt.gz")
+				checkFileNotExists(t, "testdata/tmp.txt")
+				deleteFile(t, "testdata/tmp.txt.gz")
+			},
+		},
+		{
+			name:  "gzip;gunzip",
+			input: `cd("testdata"); gzip("tmp.txt"); gunzip("tmp.txt.gz"); cd("..")`,
+			setup: func() {
+				createFile(t, "testdata/tmp.txt", "abcabcabc")
+			},
+			check: func(mbuf io.Reader, ebuf io.Reader, runErr error) {
+				checkFile(t, "testdata/tmp.txt", "abcabcabc")
+				checkFileNotExists(t, "testdata/tmp.txt.gz")
+				deleteFile(t, "testdata/tmp.txt")
 			},
 		},
 	}
