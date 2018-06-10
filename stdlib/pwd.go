@@ -21,6 +21,10 @@ func pwd(scope object.Scope, args ...object.Object) (object.Operation, error) {
 		if err != nil {
 			return object.NewError(err.Error())
 		}
+		if scope.Out != nil {
+			fmt.Fprintf(scope.Env.Streams.Stdout, d)
+			return Null
+		}
 		//fmt.Println(d) //TODO make the repl print this somehow instead
 		return &object.String{Value: d}
 	}, nil

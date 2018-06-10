@@ -502,9 +502,6 @@ func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, e
 		return unwrapReturnValue(evaluated)
 
 	case *object.Builtin:
-		// if dollar, don't set up stdin
-		//	stdin := getReader(in)
-		//	stdout, stderr := getWriters(out, env.GlobalStreams)
 		myEnv := env
 		if in != nil || out != nil {
 			myEnv = object.NewEnclosedEnvironment(env)
@@ -530,10 +527,6 @@ func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, e
 		}, args...)
 		if err != nil {
 			return object.NewError(err.Error())
-		}
-		if in != nil {
-			//		defer in.Main.Close()
-			//		defer in.Err.Close()
 		}
 		if out != nil {
 			doAsync(op, out, myEnv.Streams.Stderr)

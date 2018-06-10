@@ -1,6 +1,7 @@
 package stdlib
 
 import (
+	"bufio"
 	"fmt"
 	"path"
 	"strings"
@@ -34,13 +35,9 @@ func basename(scope object.Scope, args ...object.Object) (object.Operation, erro
 		}
 	}
 	if len(myArgs) < 1 {
-		return nil, fmt.Errorf("Missing operand")
-	}
-	if len(myArgs) > 1 {
-		relativeTo = myArgs[0]
-		inputPath = myArgs[1]
-	} else {
-		inputPath = myArgs[0]
+		if scope.In == nil {
+			return nil, fmt.Errorf("Missing operand")
+		}
 	}
 	/*
 		if scope.Out != nil {
@@ -51,6 +48,23 @@ func basename(scope object.Scope, args ...object.Object) (object.Operation, erro
 	*/
 
 	return func() object.Object {
+		if scope.In != nil {
+			bio := bufio.NewReader(scope.Env.Streams.Stdin)
+			//defer bio.Close()
+			line, _, err := bio.ReadLine()
+			if err != nil {
+				return object.NewError(err.Error())
+			}
+			myArgs = strings.Split(string(line), " ")
+		}
+
+		if len(myArgs) > 1 {
+			relativeTo = myArgs[0]
+			inputPath = myArgs[1]
+		} else {
+			inputPath = myArgs[0]
+		}
+
 		base := basenameFile(inputPath, relativeTo)
 		//_, err := fmt.Fprintln(scope.Env.Streams.Stdout, base)
 		_, err := fmt.Fprintln(scope.Env.Streams.Stdout, base)

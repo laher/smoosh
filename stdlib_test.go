@@ -55,6 +55,21 @@ func TestStdLib(t *testing.T) {
 			input:  `echo("testdata/hello.txt")|ls()`,
 			expOut: "hello.txt \n",
 		},
+		{
+			name:   "wc",
+			input:  `wc(l, "LICENSE")`,
+			expOut: "24 LICENSE\n",
+		},
+		{
+			name:   "basename(pwd())",
+			input:  `var x=pwd(); basename(x)`,
+			expOut: "smoosh\n",
+		},
+		{
+			name:   "pwd|basename",
+			input:  `pwd()|basename()`,
+			expOut: "smoosh\n",
+		},
 	}
 	for i := range tests {
 		test := tests[i]
@@ -64,9 +79,11 @@ func TestStdLib(t *testing.T) {
 			wbuf := bytes.NewBuffer([]byte{})
 			ebuf := bytes.NewBuffer([]byte{})
 			err := r.Run(rbuf, wbuf, ebuf)
-			if test.expErr && err == nil {
-				t.Errorf("Expected error but none triggered")
-			} else if !test.expErr && err != nil {
+			if test.expErr {
+				if err == nil {
+					t.Errorf("Expected error but none triggered")
+				}
+			} else if err != nil {
 				t.Errorf("Unexpected error: [%s]", err.Error())
 			}
 			out := string(wbuf.Bytes())
