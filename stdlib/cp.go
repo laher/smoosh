@@ -21,12 +21,11 @@ func init() {
 }
 
 func cp(scope object.Scope, args ...object.Object) (object.Operation, error) {
-	srces, err := interpolateArgs(scope.Env, args, true)
+	all, err := interpolateArgs(scope.Env, args, true)
 	if err != nil {
 		return nil, err
 	}
 	var (
-		dest      string
 		recursive bool
 	)
 	for i := range args {
@@ -40,6 +39,8 @@ func cp(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			}
 		}
 	}
+	srces := all[:len(all)-1]
+	dest := all[len(all)-1] //if more than 2 args then dest should be a directory
 	return func() object.Object {
 		for _, src := range srces {
 			err := copyFile(src, dest, recursive)

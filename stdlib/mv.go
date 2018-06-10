@@ -1,6 +1,7 @@
 package stdlib
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,12 +17,7 @@ func init() {
 }
 
 func mv(scope object.Scope, args ...object.Object) (object.Operation, error) {
-	var (
-		srcs []string
-		dest string
-		err  error
-	)
-	srcs, err = interpolateArgs(scope.Env, args, true)
+	all, err := interpolateArgs(scope.Env, args, true)
 	if err != nil {
 		return nil, err
 	}
@@ -31,6 +27,11 @@ func mv(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			return nil, fmt.Errorf("flag %s not supported", arg.Name)
 		}
 	}
+	if len(all) < 2 {
+		return nil, errors.New("Missing operand")
+	}
+	srcs := all[:len(all)-1]
+	dest := all[len(all)-1]
 	return func() object.Object {
 		for _, src := range srcs {
 			err := moveFile(src, dest)
