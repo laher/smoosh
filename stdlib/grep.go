@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -19,6 +21,7 @@ func init() {
 		object.Flag{Name: "H"},
 		object.Flag{Name: "n"},
 		object.Flag{Name: "v"},
+		object.Flag{Name: "r"},
 	}
 	RegisterBuiltin("grep", &object.Builtin{
 		Fn:    grep,
@@ -68,6 +71,8 @@ func grep(scope object.Scope, args ...object.Object) (object.Operation, error) {
 				grep.IsInvertMatch = true
 			case "E":
 				grep.IsExtended = true
+			case "r":
+				grep.IsRecurse = true
 			default:
 				return nil, fmt.Errorf("flag %s not supported", arg.Name)
 			}
@@ -76,23 +81,31 @@ func grep(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	if len(myArgs) < 1 {
 		return nil, fmt.Errorf("Missing operand")
 	}
+	grep.pattern = myArgs[0]
 	if len(myArgs) > 1 {
 		grep.paths = myArgs[1:]
 	}
-	grep.pattern = myArgs[0]
+	if len(grep.paths) > 1 {
+		grep.IsPrintFilename = true
+	}
+
 	reg, err := compile(grep)
 	if err != nil {
-		return nil, fmt.Errorf(err.Error())
+		return nil, err
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
 	}
 	return func() object.Object {
 		if len(grep.paths) > 0 {
-			err = grepAll(reg, grep.paths, grep, scope.Env.Streams.Stdout)
+			err = grepAll(reg, cwd, grep.paths, grep, scope.Env.Streams.Stdout)
 			if err != nil {
 				return object.NewError(err.Error())
 			}
 		} else {
 			if scope.In != nil {
-				err = grepReader(scope.In.Main, "", reg, grep, scope.Env.Streams.Stdout)
+				err = grepReader(scope.In.Main, cwd, "", reg, grep, scope.Env.Streams.Stdout)
 				if err != nil {
 					return object.NewError(err.Error())
 				}
@@ -105,7 +118,7 @@ func grep(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	}, nil
 }
 
-func grepAll(reg *regexp.Regexp, files []string, grep *Grep, out io.Writer) error {
+func grepAll(reg *regexp.Regexp, cwd string, files []string, grep *Grep, out io.Writer) error {
 	for _, filename := range files {
 		fi, err := os.Stat(filename)
 		if err != nil {
@@ -114,16 +127,28 @@ func grepAll(reg *regexp.Regexp, files []string, grep *Grep, out io.Writer) erro
 		if fi.IsDir() {
 			//recurse here
 			if grep.IsRecurse {
-				//
-				fmt.Fprintf(out, "Recursion not implemented yet\n")
+				entries, err := ioutil.ReadDir(filename)
+				if err != nil {
+					return err
+				}
+				fs := []string{}
+				for _, e := range entries {
+					fs = append(fs, filepath.Join(filename, e.Name()))
+				}
+				err = grepAll(reg, filename, fs, grep, out)
+				if err != nil {
+					return err
+				}
+				continue
 			}
+			continue
 		}
 		file, err := os.Open(filename)
 		if err != nil {
 			return err
 		}
 		defer file.Close()
-		err = grepReader(file, filename, reg, grep, out)
+		err = grepReader(file, cwd, filename, reg, grep, out)
 		if err != nil {
 			return err
 		}
@@ -135,7 +160,7 @@ func grepAll(reg *regexp.Regexp, files []string, grep *Grep, out io.Writer) erro
 	return nil
 }
 
-func grepReader(file io.Reader, filename string, reg *regexp.Regexp, grep *Grep, out io.Writer) error {
+func grepReader(file io.Reader, cwd, filename string, reg *regexp.Regexp, grep *Grep, out io.Writer) error {
 	scanner := bufio.NewScanner(file)
 	lineNumber := 1
 	for scanner.Scan() {

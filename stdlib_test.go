@@ -73,6 +73,16 @@ func TestStdLibNonDestructive(t *testing.T) {
 			input:  `pwd()|basename()`,
 			expOut: "smoosh\n",
 		},
+		{
+			name:   "grep",
+			input:  `grep("hello", "testdata/hello.txt")`,
+			expOut: "hello\n",
+		},
+		{
+			name:   "grep",
+			input:  `grep(H, "hello", "testdata/hello.txt")`,
+			expOut: "testdata/hello.txt:hello\n",
+		},
 	}
 	for i := range tests {
 		test := tests[i]
