@@ -83,6 +83,16 @@ func TestStdLibNonDestructive(t *testing.T) {
 			input:  `grep(H, "hello", "testdata/hello.txt")`,
 			expOut: "testdata/hello.txt:hello\n",
 		},
+		{
+			name:   "head",
+			input:  `head(n(5), "testdata/100.txt")`,
+			expOut: "1\n2\n3\n4\n5\n",
+		},
+		{
+			name:   "tail",
+			input:  `tail(n(5), "testdata/100.txt")`,
+			expOut: "96\n97\n98\n99\n100\n",
+		},
 	}
 	createFile(t, "testdata/hello.txt", "hello\n")
 	for i := range tests {
