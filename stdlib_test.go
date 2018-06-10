@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"io"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -93,6 +92,11 @@ func TestStdLibNonDestructive(t *testing.T) {
 			input:  `tail(n(5), "testdata/100.txt")`,
 			expOut: "96\n97\n98\n99\n100\n",
 		},
+		{
+			name:   "r",
+			input:  `r("testdata/hello.txt")`,
+			expOut: "hello\n",
+		},
 	}
 	createFile(t, "testdata/hello.txt", "hello\n")
 	for i := range tests {
@@ -182,7 +186,7 @@ func TestStdLibDestructive(t *testing.T) {
 		name  string
 		input string
 		setup func()
-		check func(mbuf, ebuf io.Reader, runErr error)
+		check func(mbuf, ebuf *bytes.Buffer, runErr error)
 	}{
 		{
 			name:  "mv",
@@ -190,7 +194,7 @@ func TestStdLibDestructive(t *testing.T) {
 			setup: func() {
 				createFile(t, "testdata/tmp.txt", "abcabcabc")
 			},
-			check: func(mbuf io.Reader, ebuf io.Reader, runErr error) {
+			check: func(mbuf, ebuf *bytes.Buffer, runErr error) {
 				if _, err := os.Stat("testdata/tmp.txt"); !os.IsNotExist(err) {
 					t.Errorf("tmp.txt should not exist [%v]", err)
 				}
@@ -204,7 +208,7 @@ func TestStdLibDestructive(t *testing.T) {
 			setup: func() {
 				createFile(t, "testdata/tmp.txt", "abcabcabc")
 			},
-			check: func(mbuf io.Reader, ebuf io.Reader, runErr error) {
+			check: func(mbuf, ebuf *bytes.Buffer, runErr error) {
 				checkFile(t, "testdata/tmp.txt", "abcabcabc")
 				checkFile(t, "testdata/tmp2.txt", "abcabcabc")
 				deleteFile(t, "testdata/tmp.txt")
@@ -217,7 +221,7 @@ func TestStdLibDestructive(t *testing.T) {
 			setup: func() {
 				createFile(t, "testdata/tmp.txt", "abcabcabc")
 			},
-			check: func(mbuf io.Reader, ebuf io.Reader, runErr error) {
+			check: func(mbuf, ebuf *bytes.Buffer, runErr error) {
 				checkFileExists(t, "testdata/tmp.txt.gz")
 				checkFileNotExists(t, "testdata/tmp.txt")
 				deleteFile(t, "testdata/tmp.txt.gz")
@@ -229,10 +233,31 @@ func TestStdLibDestructive(t *testing.T) {
 			setup: func() {
 				createFile(t, "testdata/tmp.txt", "abcabcabc")
 			},
-			check: func(mbuf io.Reader, ebuf io.Reader, runErr error) {
+			check: func(mbuf, ebuf *bytes.Buffer, runErr error) {
 				checkFile(t, "testdata/tmp.txt", "abcabcabc")
 				checkFileNotExists(t, "testdata/tmp.txt.gz")
 				deleteFile(t, "testdata/tmp.txt")
+			},
+		},
+		{
+			name:  "w",
+			input: `echo("1")|w("testdata/1.txt")`,
+			setup: func() {},
+			check: func(mbuf, ebuf *bytes.Buffer, runErr error) {
+				checkFile(t, "testdata/1.txt", "1\n")
+				deleteFile(t, "testdata/1.txt")
+			},
+		},
+		{
+			name:  "tee",
+			input: `echo("1")|tee("testdata/t.txt")`,
+			setup: func() {},
+			check: func(mbuf, ebuf *bytes.Buffer, runErr error) {
+				checkFile(t, "testdata/t.txt", "1\n")
+				deleteFile(t, "testdata/t.txt")
+				if string(mbuf.Bytes()) != "1\n" {
+					t.Errorf("stdout data does not match")
+				}
 			},
 		},
 	}

@@ -44,7 +44,7 @@ func tee(scope object.Scope, args ...object.Object) (object.Operation, error) {
 		}
 	}
 	return func() object.Object {
-		err = tee.do(scope.Env.Streams)
+		err = tee.do(scope)
 		if err != nil {
 			return object.NewError(err.Error())
 		}
@@ -52,26 +52,34 @@ func tee(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	}, nil
 }
 
-func (tee *Tee) do(streams object.Streams) error {
+func (tee *Tee) do(scope object.Scope) error {
 	flag := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
 	if tee.isAppend {
 		flag = os.O_APPEND | os.O_WRONLY
 	}
 	closers := []io.WriteCloser{}
-	writers := []io.Writer{streams.Stdout}
+	writers := []io.Writer{scope.Env.Streams.Stdout}
 	for _, file := range tee.args {
 		f, err := os.OpenFile(file, flag, 0666)
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer func() {
+			if scope.In.Wait != nil {
+				scope.In.Wait()
+			}
+			f.Close()
+		}()
+
 		writers = append(writers, f)
 		closers = append(closers, f)
 	}
 	multiwriter := io.MultiWriter(writers...)
-	_, err := io.Copy(multiwriter, streams.Stdin)
+	_, err := io.Copy(multiwriter, scope.Env.Streams.Stdin)
 	if err != nil {
-		return err
+		if err != io.ErrClosedPipe { // ErrclosedPipe is the equivalent of EOF
+			return err
+		}
 	}
 	for _, file := range closers {
 		err = file.Close()
@@ -79,5 +87,6 @@ func (tee *Tee) do(streams object.Streams) error {
 			return err
 		}
 	}
+
 	return nil
 }
