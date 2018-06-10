@@ -166,6 +166,7 @@ func (s *BacktickExpression) HashKey() HashKey {
 type Builtin struct {
 	Fn    BuiltinFunction
 	Flags []Flag
+	Help  string
 }
 
 func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }

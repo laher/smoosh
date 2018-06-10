@@ -17,15 +17,20 @@ import (
 
 func init() {
 	var opts = []object.Flag{
-		object.Flag{Name: "l"},
-		object.Flag{Name: "r"},
-		object.Flag{Name: "a"},
-		object.Flag{Name: "h"},
+		object.Flag{Name: "l", Help: "Use a long listing format"},
+		object.Flag{Name: "R", Help: "List subdirectories recursively"},
+		object.Flag{Name: "a", Help: "All files (do not ignore entries starting with .)"},
+		object.Flag{Name: "h", Help: "Print human readable sizes (e.g., 1K 234M 2G)"},
 	}
 
 	RegisterBuiltin("ls", &object.Builtin{
 		Fn:    ls,
 		Flags: opts,
+		Help: `List files
+Usage: ls [OPTION]... [FILE]...                        
+List information about the FILEs (the current directory by default).   
+Sort entries alphabetically.
+`,
 	})
 
 }

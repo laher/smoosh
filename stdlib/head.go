@@ -26,12 +26,6 @@ type Head struct {
 	Filenames []string
 }
 
-// Name() returns the name of the util
-func (head *Head) Name() string {
-	return "head"
-}
-
-// Exec actually performs the head
 func head(scope object.Scope, args ...object.Object) (object.Operation, error) {
 	head := &Head{lines: 10}
 	var err error
