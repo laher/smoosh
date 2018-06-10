@@ -12,6 +12,10 @@ import (
 func init() {
 	RegisterBuiltin("basename", &object.Builtin{
 		Fn: basename,
+		Help: `Usage: basename NAME [SUFFIX]
+  or:  basename OPTION... NAME...
+Print NAME with any leading directory components removed.
+If specified, also remove a trailing SUFFIX.`,
 	})
 
 }

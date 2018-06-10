@@ -14,8 +14,13 @@ func init() {
 	RegisterBuiltin("cp", &object.Builtin{
 		Fn: cp,
 		Flags: []object.Flag{
-			object.Flag{Name: "r"},
+			object.Flag{Name: "r", Help: "copy directories recursively"},
 		},
+		Help: `➜  smoosh git:(master) ✗ cp --help
+Usage: cp [OPTION]... SOURCE DEST
+  or:  cp [OPTION]... SOURCE... DIRECTORY
+Copy SOURCE to DEST, or multiple SOURCE(s) to DIRECTORY.
+`,
 	})
 
 }

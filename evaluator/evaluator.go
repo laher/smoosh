@@ -3,7 +3,6 @@ package evaluator
 import (
 	"fmt"
 	"io"
-	"os"
 	"sync"
 
 	"github.com/laher/smoosh/ast"
@@ -125,7 +124,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if len(args) == 1 && isError(args[0]) {
 			return args[0]
 		}
-		return applyFunction(function, args, node.In, node.Out, env)
+		return applyFunction(function, args, node.In, node.Out, env, node.Function.TokenLiteral())
 
 	case *ast.ArrayLiteral:
 		elements := evalExpressions(node.Elements, env)
@@ -486,7 +485,7 @@ func evalExpressions(
 	return result
 }
 
-func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, env *object.Environment) object.Object {
+func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, env *object.Environment, tokenLiteral string) object.Object {
 	defer func() {
 		if in != nil {
 			// defer guarantees this runs AFTER applyFunction.
@@ -539,30 +538,6 @@ func applyFunction(fn object.Object, args []object.Object, in, out *ast.Pipes, e
 	}
 }
 
-func getReader(in *ast.Pipes) io.ReadCloser {
-	if in != nil {
-		return in.Main
-	}
-	return nil
-}
-
-func getWriters(out *ast.Pipes, streams object.Streams) (io.WriteCloser, io.WriteCloser) {
-	var (
-		stdout io.WriteCloser = os.Stdout
-		stderr io.WriteCloser = os.Stderr
-	)
-	if out != nil {
-		r, w := io.Pipe()
-		stdout = w
-		out.Main = r // this will be closed by the evaluator
-
-		r, w = io.Pipe()
-		stderr = w
-		out.Err = r // this will be closed by the evaluator
-	}
-	return stdout, stderr
-}
-
 func doAsync(op object.Operation, out *ast.Pipes, stderr io.Writer) {
 	wg := sync.WaitGroup{}
 	out.Wait = func() error {
@@ -583,6 +558,7 @@ func doAsync(op object.Operation, out *ast.Pipes, stderr io.Writer) {
 	}()
 
 }
+
 func extendFunctionEnv(
 	fn *object.Function,
 	args []object.Object,

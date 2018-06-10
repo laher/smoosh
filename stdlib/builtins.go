@@ -32,6 +32,7 @@ func GetFn(name string) (*object.Builtin, bool) {
 
 var builtins = map[string]*object.Builtin{
 	"len": &object.Builtin{
+		Help: "Return the length of an array",
 		Fn: func(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			if len(args) != 1 {
 				return nil, fmt.Errorf("wrong number of arguments. got=%d, want=1",
@@ -54,6 +55,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"first": &object.Builtin{
+		Help: "Return the first item of an array",
 		Fn: func(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			if len(args) != 1 {
 				return nil, fmt.Errorf("wrong number of arguments. got=%d, want=1",
@@ -73,6 +75,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"last": &object.Builtin{
+		Help: "Return the last item of an array",
 		Fn: func(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			if len(args) != 1 {
 				return nil, fmt.Errorf("wrong number of arguments. got=%d, want=1",
@@ -95,6 +98,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"rest": &object.Builtin{
+		Help: "Return the rest of an array apart from the first element",
 		Fn: func(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			if len(args) != 1 {
 				return nil, fmt.Errorf("wrong number of arguments. got=%d, want=1",
@@ -119,6 +123,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"push": &object.Builtin{
+		Help: "Push an item onto the end of an array",
 		Fn: func(scope object.Scope, args ...object.Object) (object.Operation, error) {
 			if len(args) != 2 {
 				return nil, fmt.Errorf("wrong number of arguments. got=%d, want=2",

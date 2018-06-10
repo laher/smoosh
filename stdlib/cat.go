@@ -19,6 +19,10 @@ func init() {
 	RegisterBuiltin("cat", &object.Builtin{
 		Fn:    cat,
 		Flags: opts,
+		Help: `Usage: cat [OPTION]... [FILE]...
+Concatenate FILE(s) to standard output.
+
+With no FILE, read standard input.`,
 	})
 
 }
