@@ -271,6 +271,33 @@ func TestStdLibDestructive(t *testing.T) {
 				deleteFile(t, "testdata/touch.txt")
 			},
 		},
+		{
+			name:  "zip",
+			input: `cd("testdata"); zip("tmp.zip", "tmp.txt"); cd("..")`,
+			setup: func() {
+				createFile(t, "testdata/tmp.txt", "abcabcabc")
+			},
+			check: func(mbuf, ebuf *bytes.Buffer, runErr error) {
+				checkFileExists(t, "testdata/tmp.zip")
+				checkFileExists(t, "testdata/tmp.txt")
+				deleteFile(t, "testdata/tmp.zip")
+				deleteFile(t, "testdata/tmp.txt")
+			},
+		},
+
+		{
+			name:  "zip;unzip",
+			input: `cd("testdata"); zip("tmp.zip", "tmp.txt"); rm("tmp.txt"); unzip("tmp.zip"); cd("..")`,
+			setup: func() {
+				createFile(t, "testdata/tmp.txt", "abcabcabc")
+			},
+			check: func(mbuf, ebuf *bytes.Buffer, runErr error) {
+				checkFile(t, "testdata/tmp.txt", "abcabcabc")
+				checkFileExists(t, "testdata/tmp.zip")
+				deleteFile(t, "testdata/tmp.zip")
+				deleteFile(t, "testdata/tmp.txt")
+			},
+		},
 	}
 	for i := range tests {
 		test := tests[i]
