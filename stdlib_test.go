@@ -260,6 +260,17 @@ func TestStdLibDestructive(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:  "touch-not-exists",
+			input: `touch("testdata/touch.txt")`,
+			setup: func() {
+				deleteFileIfExists(t, "testdata/touch.txt")
+			},
+			check: func(mbuf, ebuf *bytes.Buffer, runErr error) {
+				checkFile(t, "testdata/touch.txt", "")
+				deleteFile(t, "testdata/touch.txt")
+			},
+		},
 	}
 	for i := range tests {
 		test := tests[i]
