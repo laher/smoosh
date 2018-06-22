@@ -2,6 +2,7 @@ package object
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"strings"
@@ -164,9 +165,46 @@ func (s *BacktickExpression) HashKey() HashKey {
 }
 
 type Builtin struct {
-	Fn    BuiltinFunction
-	Flags []Flag
-	Help  string
+	Fn BuiltinFunction
+
+	Flags       []Flag
+	ParamTypes  []ObjectType
+	ReturnTypes []ObjectType
+
+	Help string
+
+	PipeStdin  bool
+	PipeStdout bool
+}
+
+func (b *Builtin) CheckParams(params []Object) error {
+	var (
+		j             = 0
+		paramsNoFlags = []Object{}
+		paramCount    = len(b.ParamTypes)
+	)
+	for _, pt := range params {
+		if paramCount+1 < j {
+			return errors.New("Incorrect types")
+		}
+		switch pt.Type() {
+		case FLAG_OBJ:
+		default:
+			paramsNoFlags = append(paramsNoFlags, pt)
+			j++
+		}
+	}
+	if len(paramsNoFlags) < len(b.ParamTypes) {
+		return errors.New("Not enough params")
+	}
+
+	for i, pt := range b.ParamTypes {
+		if pt != paramsNoFlags[i].Type() {
+			return errors.New("Incorrect type")
+		}
+	}
+
+	return nil
 }
 
 func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }

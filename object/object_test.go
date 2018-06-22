@@ -58,3 +58,14 @@ func TestIntegerHashKey(t *testing.T) {
 		t.Errorf("integers with twoerent content have same hash keys")
 	}
 }
+
+func TestCheckParams(t *testing.T) {
+	b := &Builtin{}
+	params := []Object{
+		&String{Value: "1"},
+	}
+	err := b.CheckParams(params)
+	if err != nil {
+		t.Errorf("CheckParams hould not trigger an error: %v", err)
+	}
+}
