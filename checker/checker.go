@@ -16,27 +16,101 @@ func (e typeErrors) Error() string {
 	return ""
 }
 
+type TypeError struct {
+	Type string
+	Msg  string
+	Line int
+}
+
+func (er TypeError) Error() string {
+	return er.Msg
+}
+
 var (
-	NULL  = &object.Null{}
-	TRUE  = &object.Boolean{Value: true}
-	FALSE = &object.Boolean{Value: false}
+	TypeMismatch = "mismatched types"
+	unknown      = object.ObjectType("unknown")
 )
 
+func newEnclosedEnvironment(outer *environment) *environment {
+	env := newEnvironment(outer.Streams)
+	env.outer = outer
+	return env
+}
+
+func newEnvironment(streams object.Streams) *environment {
+	s := make(map[string]object.ObjectType)
+	return &environment{store: s, outer: nil, Streams: streams}
+}
+
+type environment struct {
+	store   map[string]object.ObjectType
+	outer   *environment
+	Streams object.Streams
+}
+
+func (e *environment) Get(name string) (object.ObjectType, bool) {
+	obj, ok := e.store[name]
+	if !ok && e.outer != nil {
+		obj, ok = e.outer.Get(name)
+	}
+	return obj, ok
+}
+
+func (e *environment) Set(name string, val object.ObjectType) object.ObjectType {
+	e.store[name] = val
+	return val
+}
+
 // Check compares types against expected types
-func Check(node ast.Node, env *object.Environment) (object.ObjectType, error) {
+func Check(node ast.Node, env *environment) (object.ObjectType, error) {
 
 	switch node := node.(type) {
 	// Statements
 	case *ast.Program:
 		return checkProgram(node, env)
-
 	case *ast.BlockStatement:
 		return checkBlockStatement(node, env)
 
 	case *ast.ExpressionStatement:
 		return Check(node.Expression, env)
-
+	case *ast.ReturnStatement:
+		return Check(node.ReturnValue, env)
+	case *ast.AssignStatement:
+		t, err := Check(node.Value, env)
+		if err != nil {
+			return t, err
+		}
+		// check return types
+		if v, ok := env.Get(node.Name.Value); ok {
+			if t != v {
+				return t, fmt.Errorf("type %s but expected %s", t, v)
+			}
+		}
+		return t, nil
 		// Expressions
+	case *ast.InfixExpression:
+
+		left, err := Check(node.Left, env)
+		if err != nil {
+			return left, err
+		}
+		right, err := Check(node.Right, env)
+		if err != nil {
+			return right, err
+		}
+		// TODO special string / int cases?
+		// TODO special == / != cases
+		// TODO unknown operator?
+		if left != right {
+			return unknown, TypeError{Type: TypeMismatch, Msg: fmt.Sprintf("Infix [%s]: type [%s] does not equal [%s]. L: [%+v], R: [%+v]", node.Operator, left, right, node.Left, node.Right)}
+		}
+		switch node.Operator {
+		case "==", "!=":
+			return object.BOOLEAN_OBJ, nil
+		}
+		// assume infix returns same type?
+		return left, nil
+		// Literals
 	case *ast.IntegerLiteral:
 		return object.INTEGER_OBJ, nil
 	case *ast.StringLiteral:
@@ -50,7 +124,7 @@ func Check(node ast.Node, env *object.Environment) (object.ObjectType, error) {
 	}
 }
 
-func checkProgram(program *ast.Program, env *object.Environment) (object.ObjectType, error) {
+func checkProgram(program *ast.Program, env *environment) (object.ObjectType, error) {
 	var (
 		result object.ObjectType
 		err    error
@@ -83,7 +157,7 @@ func checkProgram(program *ast.Program, env *object.Environment) (object.ObjectT
 
 func checkBlockStatement(
 	block *ast.BlockStatement,
-	env *object.Environment,
+	env *environment,
 ) (object.ObjectType, error) {
 	var (
 		result object.ObjectType
@@ -94,12 +168,12 @@ func checkBlockStatement(
 	for _, statement := range block.Statements {
 		result, err = Check(statement, env)
 		if err != nil {
-			return object.ObjectType(""), err
+			return unknown, err
 		}
 		if shouldBePiping(statement) && !isPiping(statement) {
 			//verify that the in.Out is non-nil
 			err := errors.New("Call is not piping when it should be")
-			return object.ObjectType(""), err
+			return unknown, err
 		}
 
 		return result, nil
