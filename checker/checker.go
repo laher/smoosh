@@ -99,17 +99,27 @@ func Check(node ast.Node, env *environment) (object.ObjectType, error) {
 			return right, err
 		}
 		// TODO special string / int cases?
-		// TODO special == / != cases
 		// TODO unknown operator?
 		if left != right {
 			return unknown, TypeError{Type: TypeMismatch, Msg: fmt.Sprintf("Infix [%s]: type [%s] does not equal [%s]. L: [%+v], R: [%+v]", node.Operator, left, right, node.Left, node.Right)}
 		}
 		switch node.Operator {
-		case "==", "!=":
+		case "==", "!=", ">", "<", "<=", ">=":
 			return object.BOOLEAN_OBJ, nil
 		}
 		// assume infix returns same type?
 		return left, nil
+	case *ast.PrefixExpression:
+		right, err := Check(node.Right, env)
+		if err != nil {
+			return right, err
+		}
+		// check types
+		if right != object.INTEGER_OBJ {
+			return unknown, TypeError{Type: TypeMismatch, Msg: fmt.Sprintf("Prefix [%s]: type [%s] is not an integer. Value [%+v]", node.Operator, right, node.Right)}
+		}
+		return right, nil
+
 		// Literals
 	case *ast.IntegerLiteral:
 		return object.INTEGER_OBJ, nil
