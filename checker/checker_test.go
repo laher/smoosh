@@ -80,6 +80,77 @@ func TestIntegers(t *testing.T) {
 	}
 	testThings(t, tests)
 }
+func TestBangs(t *testing.T) {
+	tests := []test{
+		{input: "!true"},
+		{input: "!false"},
+		{input: "!5"},
+		{input: "!!true"},
+		{input: "!!false"},
+		{input: "!!5"},
+	}
+	for i := range tests {
+		tests[i].expected = object.BOOLEAN_OBJ
+	}
+	testThings(t, tests)
+}
+
+func TestIfElse(t *testing.T) {
+	// TODO sum type?
+	tests := []test{
+		{input: "if (true) { 10 }"},
+		{input: "if (false) { 10 }"},
+		{input: "if (1) { 10 }"},
+		{input: "if (1 < 2) { 10 }"},
+		{input: "if (1 > 2) { 10 }"},
+		{input: "if (1 > 2) { 10 } else { 20 }"},
+		{input: "if (1 < 2) { 10 } else { 20 }"},
+	}
+	for i := range tests {
+		tests[i].expected = object.INTEGER_OBJ
+	}
+	testThings(t, tests)
+
+}
+
+func TestReturnStatements(t *testing.T) {
+	tests := []test{
+		{input: "return 10;"},
+		{input: "return 10; 9;"},
+		{input: "return 2 * 5; 9;"},
+		{input: "9; return 2 * 5; 9;"},
+		{input: "if (10 > 1) { return 10; }"},
+		{input: `
+if (10 > 1) {
+  if (10 > 1) {
+    return 10;
+  }
+
+  return 1;
+}
+`,
+		},
+		{input: `
+var f = fn(x) {
+  return x;
+  x + 10;
+};
+f(10);`,
+		},
+		{input: `
+var f = fn(x) {
+   var result = x + 10;
+   return result;
+   return 10;
+};
+f(11);`,
+		},
+	}
+	for i := range tests {
+		tests[i].expected = object.RETURN_VALUE_OBJ
+	}
+	testThings(t, tests)
+}
 
 func testThings(t *testing.T, tests []test) {
 	for _, tt := range tests {

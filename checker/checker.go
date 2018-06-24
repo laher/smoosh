@@ -6,6 +6,7 @@ import (
 
 	"github.com/laher/smoosh/ast"
 	"github.com/laher/smoosh/object"
+	"github.com/laher/smoosh/stdlib"
 )
 
 type typeErrors struct {
@@ -27,8 +28,9 @@ func (er TypeError) Error() string {
 }
 
 var (
-	TypeMismatch = "mismatched types"
-	unknown      = object.ObjectType("unknown")
+	TypeMismatch      = "mismatched types"
+	UnknownIdentifier = "unknown identifier"
+	unknown           = object.ObjectType("unknown")
 )
 
 func newEnclosedEnvironment(outer *environment) *environment {
@@ -74,7 +76,12 @@ func Check(node ast.Node, env *environment) (object.ObjectType, error) {
 	case *ast.ExpressionStatement:
 		return Check(node.Expression, env)
 	case *ast.ReturnStatement:
-		return Check(node.ReturnValue, env)
+		// TODO return types?
+		_, err := Check(node.ReturnValue, env)
+		if err != nil {
+			return unknown, err
+		}
+		return object.RETURN_VALUE_OBJ, nil
 	case *ast.AssignStatement:
 		t, err := Check(node.Value, env)
 		if err != nil {
@@ -86,6 +93,7 @@ func Check(node ast.Node, env *environment) (object.ObjectType, error) {
 				return t, fmt.Errorf("type %s but expected %s", t, v)
 			}
 		}
+		env.Set(node.Name.Value, t)
 		return t, nil
 		// Expressions
 	case *ast.InfixExpression:
@@ -104,7 +112,7 @@ func Check(node ast.Node, env *environment) (object.ObjectType, error) {
 			return unknown, TypeError{Type: TypeMismatch, Msg: fmt.Sprintf("Infix [%s]: type [%s] does not equal [%s]. L: [%+v], R: [%+v]", node.Operator, left, right, node.Left, node.Right)}
 		}
 		switch node.Operator {
-		case "==", "!=", ">", "<", "<=", ">=":
+		case "==", "!=", ">", "<", "<=", ">=", "!":
 			return object.BOOLEAN_OBJ, nil
 		}
 		// assume infix returns same type?
@@ -114,13 +122,98 @@ func Check(node ast.Node, env *environment) (object.ObjectType, error) {
 		if err != nil {
 			return right, err
 		}
-		// check types
-		if right != object.INTEGER_OBJ {
-			return unknown, TypeError{Type: TypeMismatch, Msg: fmt.Sprintf("Prefix [%s]: type [%s] is not an integer. Value [%+v]", node.Operator, right, node.Right)}
+
+		switch node.Operator {
+		case "!":
+			// check types
+			if right != object.INTEGER_OBJ && right != object.BOOLEAN_OBJ {
+				return unknown, TypeError{Type: TypeMismatch, Msg: fmt.Sprintf("Prefix [%s]: type [%s] is not an integer or bool. Value [%+v]", node.Operator, right, node.Right)}
+			}
+			return object.BOOLEAN_OBJ, nil
+		case "-":
+			// check types
+			if right != object.INTEGER_OBJ {
+				return unknown, TypeError{Type: TypeMismatch, Msg: fmt.Sprintf("Prefix [%s]: type [%s] is not an integer. Value [%+v]", node.Operator, right, node.Right)}
+			}
+			return object.INTEGER_OBJ, nil
+		default:
+			// TODO: what?
 		}
 		return right, nil
 
+	case *ast.IfExpression:
+		// TODO what to return?
+		// IMO maybe VOID or a return value where appropriate
+		r, err := Check(node.Condition, env)
+		if err != nil {
+			return unknown, err
+		}
+		r, err = Check(node.Consequence, env)
+		if err != nil {
+			return unknown, err
+		}
+		if node.Alternative != nil {
+			r, err = Check(node.Alternative, env)
+			if err != nil {
+				return unknown, err
+			}
+		}
+		return r, nil
+
+	case *ast.Identifier:
+		if val, ok := env.Get(node.Value); ok {
+			return val, nil
+		}
+
+		if builtin, ok := stdlib.GetFn(node.Value); ok {
+			return builtin.Type(), nil
+		}
+
+		return unknown, TypeError{Type: UnknownIdentifier, Msg: fmt.Sprintf("Unknown identifier [%s]", node.Value)}
+
+	case *ast.CallExpression:
+		if node.Function.TokenLiteral() == "quote" {
+			// TODO macros
+		}
+		// TODO return types
+		f, err := Check(node.Function, env)
+		if err != nil {
+			return unknown, err
+		}
+		enclosedEnv := newEnclosedEnvironment(env)
+		// apply extra flags during argument parsing
+		switch f {
+		case object.BUILTIN_OBJ:
+			// TODO check arg types
+		case object.FUNCTION_OBJ:
+			// TODO check arg types
+		default:
+			//			return unknown, TypeError{Type: TypeMismatch, Msg: fmt.Sprintf("[%s] is not a function", f)}
+		}
+		// TODO check args match signature ...
+		for _, a := range node.Arguments {
+			_, err := Check(a, env)
+			if err != nil {
+				return unknown, err
+			}
+			//enclosedEnv.Set(a.String(), t)
+		}
+		r, err := Check(node.Function, enclosedEnv)
+		return r, err
+
 		// Literals
+	case *ast.FunctionLiteral:
+		env = newEnclosedEnvironment(env)
+		for _, p := range node.Parameters {
+			// TODO add type signatures!
+			env.Set(p.Value, object.INTEGER_OBJ)
+		}
+		b, err := Check(node.Body, env)
+		if err != nil {
+			return unknown, err
+		}
+		return b, nil
+
 	case *ast.IntegerLiteral:
 		return object.INTEGER_OBJ, nil
 	case *ast.StringLiteral:
