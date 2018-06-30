@@ -511,7 +511,8 @@ func TestIfElseExpression(t *testing.T) {
 }
 
 func TestFunctionLiteralParsing(t *testing.T) {
-	input := `fn(x, y) { x + y; }`
+	//input := `fn(x, y) { x + y; }`
+	input := `fn(x = 1, y = 2) { x + y; }`
 
 	l := lexer.New(input)
 	p := New(l)
@@ -540,8 +541,8 @@ func TestFunctionLiteralParsing(t *testing.T) {
 			len(function.Parameters))
 	}
 
-	testLiteralExpression(t, function.Parameters[0], "x")
-	testLiteralExpression(t, function.Parameters[1], "y")
+	testInfixExpression(t, function.Parameters[0], "x", "=", "1")
+	testInfixExpression(t, function.Parameters[1], "y", "=", "2")
 
 	if len(function.Body.Statements) != 1 {
 		t.Fatalf("function.Body.Statements has not 1 statements. got=%d\n",
@@ -560,11 +561,11 @@ func TestFunctionLiteralParsing(t *testing.T) {
 func TestFunctionParameterParsing(t *testing.T) {
 	tests := []struct {
 		input          string
-		expectedParams []string
+		expectedParams [][]string
 	}{
-		{input: "fn() {};", expectedParams: []string{}},
-		{input: "fn(x) {};", expectedParams: []string{"x"}},
-		{input: "fn(x, y, z) {};", expectedParams: []string{"x", "y", "z"}},
+		{input: "fn() {};", expectedParams: [][]string{}},
+		{input: "fn(x = 1) {};", expectedParams: [][]string{{"x", "=", "1"}}},
+		{input: "fn(x = 1, y = 2, z = 3) {};", expectedParams: [][]string{{"x", "=", "1"}, {"y", "=", "2"}, {"z", "=", "3"}}},
 	}
 
 	for _, tt := range tests {
@@ -582,7 +583,8 @@ func TestFunctionParameterParsing(t *testing.T) {
 		}
 
 		for i, ident := range tt.expectedParams {
-			testLiteralExpression(t, function.Parameters[i], ident)
+			testInfixExpression(t, function.Parameters[i], ident[0], ident[1], ident[2])
+			//			testLiteralExpression(t, function.Parameters[i], ident)
 		}
 	}
 }
@@ -1081,7 +1083,7 @@ func checkParserErrors(t *testing.T, p *Parser) {
 }
 
 func TestMacroLiteralParsing(t *testing.T) {
-	input := `macro(x, y) { x + y; }`
+	input := `macro(x = 1, y = 2) { x + y; }`
 
 	l := lexer.New(input)
 	p := New(l)
@@ -1110,8 +1112,8 @@ func TestMacroLiteralParsing(t *testing.T) {
 			len(macro.Parameters))
 	}
 
-	testLiteralExpression(t, macro.Parameters[0], "x")
-	testLiteralExpression(t, macro.Parameters[1], "y")
+	testInfixExpression(t, macro.Parameters[0], "x", "=", "1")
+	testInfixExpression(t, macro.Parameters[1], "y", "=", "2")
 
 	if len(macro.Body.Statements) != 1 {
 		t.Fatalf("macro.Body.Statements has not 1 statements. got=%d\n",

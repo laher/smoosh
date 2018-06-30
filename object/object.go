@@ -114,7 +114,7 @@ func NewError(format string, a ...interface{}) *Error {
 }
 
 type Function struct {
-	Parameters []*ast.Identifier
+	Parameters []*ast.InfixExpression
 	Body       *ast.BlockStatement
 	Env        *Environment
 }
@@ -280,7 +280,7 @@ func (q *Quote) Inspect() string {
 }
 
 type Macro struct {
-	Parameters []*ast.Identifier
+	Parameters []*ast.InfixExpression
 	Body       *ast.BlockStatement
 	Env        *Environment
 }

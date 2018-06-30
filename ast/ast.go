@@ -161,6 +161,15 @@ func (bs *BlockStatement) String() string {
 	return out.String()
 }
 
+type Parameter struct {
+	Identifier *Identifier
+	Default    Expression
+}
+
+func (i *Parameter) expressionNode()      {}
+func (i *Parameter) TokenLiteral() string { return i.Identifier.Token.Literal }
+func (i *Parameter) String() string       { return i.Identifier.String() + " = " + i.Default.String() }
+
 // Expressions
 type Identifier struct {
 	Token token.Token // the token.IDENT token
@@ -329,7 +338,7 @@ func (pe *PipeExpression) String() string {
 
 type FunctionLiteral struct {
 	Token      token.Token // The 'fn' token
-	Parameters []*Identifier
+	Parameters []*InfixExpression
 	Body       *BlockStatement
 }
 
@@ -471,7 +480,7 @@ func (hl *HashLiteral) String() string {
 
 type MacroLiteral struct {
 	Token      token.Token // The 'macro' token
-	Parameters []*Identifier
+	Parameters []*InfixExpression
 	Body       *BlockStatement
 }
 

@@ -566,7 +566,8 @@ func extendFunctionEnv(
 	env := object.NewEnclosedEnvironment(fn.Env)
 
 	for paramIdx, param := range fn.Parameters {
-		env.Set(param.Value, args[paramIdx])
+		n := param.Left.(*ast.Identifier)
+		env.Set(n.Value, args[paramIdx])
 	}
 
 	return env

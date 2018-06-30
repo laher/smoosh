@@ -77,11 +77,11 @@ func Check(node ast.Node, env *environment) (object.ObjectType, error) {
 		return Check(node.Expression, env)
 	case *ast.ReturnStatement:
 		// TODO return types?
-		_, err := Check(node.ReturnValue, env)
+		r, err := Check(node.ReturnValue, env)
 		if err != nil {
 			return unknown, err
 		}
-		return object.RETURN_VALUE_OBJ, nil
+		return r, nil
 	case *ast.AssignStatement:
 		t, err := Check(node.Value, env)
 		if err != nil {
@@ -175,38 +175,48 @@ func Check(node ast.Node, env *environment) (object.ObjectType, error) {
 		if node.Function.TokenLiteral() == "quote" {
 			// TODO macros
 		}
-		// TODO return types
-		f, err := Check(node.Function, env)
-		if err != nil {
-			return unknown, err
-		}
 		enclosedEnv := newEnclosedEnvironment(env)
-		// apply extra flags during argument parsing
-		switch f {
-		case object.BUILTIN_OBJ:
-			// TODO check arg types
-		case object.FUNCTION_OBJ:
-			// TODO check arg types
-		default:
-			//			return unknown, TypeError{Type: TypeMismatch, Msg: fmt.Sprintf("[%s] is not a function", f)}
-		}
 		// TODO check args match signature ...
 		for _, a := range node.Arguments {
-			_, err := Check(a, env)
+			t, err := Check(a, env)
 			if err != nil {
 				return unknown, err
 			}
-			//enclosedEnv.Set(a.String(), t)
+			enclosedEnv.Set(a.String(), t)
 		}
 		r, err := Check(node.Function, enclosedEnv)
-		return r, err
+		if err != nil {
+			return r, err
+		}
+		// apply extra flags during argument parsing
+		switch r {
+		case object.BUILTIN_OBJ:
+			// TODO check arg types
+			// node.
+		case object.FUNCTION_OBJ:
+			// TODO check arg types
 
+		default:
+			//			return unknown, TypeError{Type: TypeMismatch, Msg: fmt.Sprintf("[%s] is not a function", f)}
+		}
+
+		return r, nil
 		// Literals
 	case *ast.FunctionLiteral:
 		env = newEnclosedEnvironment(env)
 		for _, p := range node.Parameters {
-			// TODO add type signatures!
-			env.Set(p.Value, object.INTEGER_OBJ)
+			switch e := p.Right.(type) {
+			case *ast.Boolean:
+				env.Set(p.Left.(*ast.Identifier).Value, object.BOOLEAN_OBJ)
+			case *ast.IntegerLiteral:
+				env.Set(p.Left.(*ast.Identifier).Value, object.INTEGER_OBJ)
+			case *ast.StringLiteral:
+				env.Set(p.Left.(*ast.Identifier).Value, object.STRING_OBJ)
+			case *ast.Identifier: // TODO detect type
+				env.Set(p.Left.(*ast.Identifier).Value, object.INTEGER_OBJ)
+			default:
+				return unknown, fmt.Errorf("Unsupported 'right' type: [%T]", e)
+			}
 		}
 		b, err := Check(node.Body, env)
 		if err != nil {

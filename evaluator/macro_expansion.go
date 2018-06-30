@@ -116,7 +116,8 @@ func extendMacroEnv(
 	extended := object.NewEnclosedEnvironment(macro.Env)
 
 	for paramIdx, param := range macro.Parameters {
-		extended.Set(param.Value, args[paramIdx])
+		n := param.Left.(*ast.Identifier)
+		extended.Set(n.Value, args[paramIdx])
 	}
 
 	return extended

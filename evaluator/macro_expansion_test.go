@@ -12,9 +12,9 @@ import (
 func TestDefineMacros(t *testing.T) {
 	input := `
 	var number = 1;
-	var function = fn(x, y) { x + y };
-	var mymacro = macro(x, y) { x + y; };
-	var mymacroTwo = macro(x, y) { x + y; };
+	var function = fn(x = 1, y = 0) { x + y };
+	var mymacro = macro(x = 1, y = 0) { x + y; };
+	var mymacroTwo = macro(x = 1, y = 0) { x + y; };
 	`
 
 	streams := object.Streams{}
@@ -52,11 +52,11 @@ func TestDefineMacros(t *testing.T) {
 			len(macro.Parameters))
 	}
 
-	if macro.Parameters[0].String() != "x" {
-		t.Fatalf("parameter is not 'x'. got=%q", macro.Parameters[0])
+	if macro.Parameters[0].String() != "(x = 1)" {
+		t.Fatalf("parameter is not '(x = 1)'. got=%q", macro.Parameters[0])
 	}
-	if macro.Parameters[1].String() != "y" {
-		t.Fatalf("parameter is not 'y'. got=%q", macro.Parameters[1])
+	if macro.Parameters[1].String() != "(y = 0)" {
+		t.Fatalf("parameter is not '(y = 0)'. got=%q", macro.Parameters[1])
 	}
 
 	expectedBody := "  (x + y)\n"

@@ -130,26 +130,47 @@ if (10 > 1) {
 }
 `,
 		},
-		{input: `
-var f = fn(x) {
+	}
+	for i := range tests {
+		tests[i].expected = object.INTEGER_OBJ
+	}
+
+	testThings(t, tests)
+}
+
+func TestReturnStatementsInFunc(t *testing.T) {
+	testsInt := []test{{input: `
+var f = fn(x = 0) {
+  x = 1;
   return x;
-  x + 10;
 };
 f(10);`,
+	},
+		{input: `
+var f = fn(x = 0) {
+   return 10;
+};
+f(11);`,
 		},
 		{input: `
-var f = fn(x) {
+var f = fn(x = 0) {
+   return x;
+};
+f(11);`,
+		},
+		{input: `
+var f = fn(x = 0) {
    var result = x + 10;
    return result;
    return 10;
 };
 f(11);`,
-		},
+		}}
+	for i := range testsInt {
+		testsInt[i].expected = object.INTEGER_OBJ
 	}
-	for i := range tests {
-		tests[i].expected = object.RETURN_VALUE_OBJ
-	}
-	testThings(t, tests)
+
+	testThings(t, testsInt)
 }
 
 func testThings(t *testing.T, tests []test) {
@@ -167,9 +188,8 @@ func testThings(t *testing.T, tests []test) {
 						return
 					}
 					return
-				} else {
-					t.Error("checkProgram returned wrong error. Returned", err, "expected:", tt.expectedErrorType)
 				}
+				t.Error("checkProgram returned wrong error. Returned", err, "expected:", tt.expectedErrorType)
 			} else {
 				if err != nil {
 					t.Error("unexpected error checking program", err)
