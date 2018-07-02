@@ -214,6 +214,6 @@ func testCheck(input string) (object.ObjectType, error) {
 		Stdout: bytes.NewBuffer([]byte{}),
 		Stderr: bytes.NewBuffer([]byte{}),
 	}
-	env := newEnvironment(streams)
+	env := NewEnvironment(streams)
 	return Check(program, env)
 }

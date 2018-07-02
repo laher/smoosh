@@ -190,7 +190,7 @@ func (p *Parser) parseVarStatement() *ast.AssignStatement {
 }
 
 func (p *Parser) parseReassignStatement() *ast.AssignStatement {
-	stmt := &ast.AssignStatement{Token: token.Token{Type: token.VAR}}
+	stmt := &ast.AssignStatement{Token: token.Token{Type: token.VAR, Line: p.curToken.Line}}
 	return p.parseAssignStament(stmt)
 }
 
@@ -506,7 +506,8 @@ func (p *Parser) parseFunctionParameters() []*ast.InfixExpression {
 		p.nextToken()
 		op = p.curToken.Literal
 		p.nextToken()
-		right = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+		right = p.parseExpression(LOWEST)
+		//right = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 	}
 	param := &ast.InfixExpression{
 		Left:     ident,
@@ -526,7 +527,7 @@ func (p *Parser) parseFunctionParameters() []*ast.InfixExpression {
 			p.nextToken()
 			op = p.curToken.Literal
 			p.nextToken()
-			right = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+			right = p.parseExpression(LOWEST)
 		}
 		param := &ast.InfixExpression{
 			Left:     ident,

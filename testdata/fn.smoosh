@@ -1,0 +1,21 @@
+#!/usr/bin/smoosh
+
+var x = fn() {
+  echo ("Fn")
+};
+
+x()
+
+
+var y = fn(a = 0) {
+  echo (a)
+};
+
+y(1)
+y()
+
+var z = fn(a) {
+  echo (a)
+};
+
+z(1)

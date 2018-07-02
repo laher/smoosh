@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/laher/smoosh/checker"
 	"github.com/laher/smoosh/evaluator"
 	"github.com/laher/smoosh/lexer"
 	"github.com/laher/smoosh/object"
@@ -18,14 +19,20 @@ import (
 
 // NewRunner initializes a Runner
 func NewRunner() *Runner {
-	return &Runner{true, true, false}
+	return &Runner{
+		Parse:     true,
+		TypeCheck: true,
+		Evaluate:  true,
+		Format:    false,
+	}
 }
 
 // Runner can run a repl or a program
 type Runner struct {
-	Parse    bool
-	Evaluate bool
-	Format   bool
+	Parse     bool
+	TypeCheck bool
+	Evaluate  bool
+	Format    bool
 }
 
 // RunFile runs a file as a single program
@@ -51,16 +58,20 @@ func (r *Runner) Run(rdr io.Reader, out io.Writer, stderr io.Writer) error {
 	}
 	env := object.NewEnvironment(streams)
 	macroEnv := object.NewEnvironment(streams)
-	return r.runData(string(data), out, env, macroEnv)
+	return r.runData(string(data), out, env, macroEnv, streams)
 }
 
-func (r *Runner) runData(data string, out io.Writer, env, macroEnv *object.Environment) error {
+func (r *Runner) runData(data string, out io.Writer, env, macroEnv *object.Environment, streams object.Streams) error {
 	l := lexer.New(data)
 	if r.Parse {
 		p := parser.New(l)
 		program := p.ParseProgram()
 		if len(p.Errors()) > 0 {
 			return errors.New(p.Errors()[0])
+		}
+		if r.TypeCheck {
+			checkerEnv := checker.NewEnvironment(streams)
+			checker.Check(program, checkerEnv)
 		}
 
 		if r.Evaluate {

@@ -541,8 +541,8 @@ func TestFunctionLiteralParsing(t *testing.T) {
 			len(function.Parameters))
 	}
 
-	testInfixExpression(t, function.Parameters[0], "x", "=", "1")
-	testInfixExpression(t, function.Parameters[1], "y", "=", "2")
+	testInfixExpression(t, function.Parameters[0], "x", "=", 1)
+	testInfixExpression(t, function.Parameters[1], "y", "=", 2)
 
 	if len(function.Body.Statements) != 1 {
 		t.Fatalf("function.Body.Statements has not 1 statements. got=%d\n",
@@ -559,13 +559,18 @@ func TestFunctionLiteralParsing(t *testing.T) {
 }
 
 func TestFunctionParameterParsing(t *testing.T) {
+	type params struct {
+		k  string
+		op string
+		v  int
+	}
 	tests := []struct {
 		input          string
-		expectedParams [][]string
+		expectedParams []params
 	}{
-		{input: "fn() {};", expectedParams: [][]string{}},
-		{input: "fn(x = 1) {};", expectedParams: [][]string{{"x", "=", "1"}}},
-		{input: "fn(x = 1, y = 2, z = 3) {};", expectedParams: [][]string{{"x", "=", "1"}, {"y", "=", "2"}, {"z", "=", "3"}}},
+		{input: "fn() {};", expectedParams: []params{}},
+		{input: "fn(x = 1) {};", expectedParams: []params{{"x", "=", 1}}},
+		{input: "fn(x = 1, y = 2, z = 3) {};", expectedParams: []params{{"x", "=", 1}, {"y", "=", 2}, {"z", "=", 3}}},
 	}
 
 	for _, tt := range tests {
@@ -583,8 +588,7 @@ func TestFunctionParameterParsing(t *testing.T) {
 		}
 
 		for i, ident := range tt.expectedParams {
-			testInfixExpression(t, function.Parameters[i], ident[0], ident[1], ident[2])
-			//			testLiteralExpression(t, function.Parameters[i], ident)
+			testInfixExpression(t, function.Parameters[i], ident.k, ident.op, ident.v)
 		}
 	}
 }
@@ -1112,8 +1116,8 @@ func TestMacroLiteralParsing(t *testing.T) {
 			len(macro.Parameters))
 	}
 
-	testInfixExpression(t, macro.Parameters[0], "x", "=", "1")
-	testInfixExpression(t, macro.Parameters[1], "y", "=", "2")
+	testInfixExpression(t, macro.Parameters[0], "x", "=", 1)
+	testInfixExpression(t, macro.Parameters[1], "y", "=", 2)
 
 	if len(macro.Body.Statements) != 1 {
 		t.Fatalf("macro.Body.Statements has not 1 statements. got=%d\n",

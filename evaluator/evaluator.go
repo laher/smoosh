@@ -441,7 +441,7 @@ func evalIdentifier(
 		return builtin
 	}
 
-	return newError("identifier not found: " + node.Value)
+	return newError("identifier not found: %v", node.Value)
 }
 
 func isTruthy(obj object.Object) bool {
@@ -567,7 +567,14 @@ func extendFunctionEnv(
 
 	for paramIdx, param := range fn.Parameters {
 		n := param.Left.(*ast.Identifier)
-		env.Set(n.Value, args[paramIdx])
+		if len(args) > paramIdx {
+			env.Set(n.Value, args[paramIdx])
+			continue
+		}
+		if param.Operator == "=" {
+			val := Eval(param.Right, fn.Env)
+			env.Set(n.Value, val)
+		}
 	}
 
 	return env

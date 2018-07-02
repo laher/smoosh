@@ -1,0 +1,8 @@
+#!/usr/bin/smoosh
+
+var y = fn(a = 0) {
+  echo (a)
+};
+
+y()
+

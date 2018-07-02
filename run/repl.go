@@ -42,7 +42,7 @@ func (r *Runner) Start(in io.Reader, out io.Writer, stderr io.Writer) {
 		if err != nil {
 			panic(err)
 		}
-		err = r.runData(string(all), out, env, macroEnv)
+		err = r.runData(string(all), out, env, macroEnv, streams)
 		if err != nil {
 			panic(err)
 		}
@@ -61,7 +61,7 @@ func (r *Runner) Start(in io.Reader, out io.Writer, stderr io.Writer) {
 		}
 
 		line := scanner.Text()
-		err = r.runData(line, out, env, macroEnv)
+		err = r.runData(line, out, env, macroEnv, streams)
 		if err != nil {
 			panic(err)
 		}

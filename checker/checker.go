@@ -34,12 +34,12 @@ var (
 )
 
 func newEnclosedEnvironment(outer *environment) *environment {
-	env := newEnvironment(outer.Streams)
+	env := NewEnvironment(outer.Streams)
 	env.outer = outer
 	return env
 }
 
-func newEnvironment(streams object.Streams) *environment {
+func NewEnvironment(streams object.Streams) *environment {
 	s := make(map[string]object.ObjectType)
 	return &environment{store: s, outer: nil, Streams: streams}
 }
@@ -307,7 +307,10 @@ func shouldBePiping(statement ast.Statement) bool {
 func isPiping(statement ast.Statement) bool {
 	if expS, ok := statement.(*ast.ExpressionStatement); ok {
 		if c, ok := expS.Expression.(*ast.CallExpression); ok {
-			return c.Out != nil && c.Out.Main != nil
+			return c.Out != nil
+			// TODO: c.Out.Main is not managed in the checker
+			// What should we do here?
+			// && c.Out.Main != nil
 		}
 	}
 	return false
