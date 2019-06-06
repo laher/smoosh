@@ -78,6 +78,15 @@ var keywords = map[string]TokenType{
 	"macro":  MACRO,
 }
 
+func ListKeywords() []string {
+	r := []string{}
+	for k, _ := range keywords {
+		r = append(r, k)
+	}
+	return r
+
+}
+
 func LookupIdent(ident string) TokenType {
 	if tok, ok := keywords[ident]; ok {
 		return tok
