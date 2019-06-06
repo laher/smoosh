@@ -2,6 +2,7 @@ package stdlib
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/laher/smoosh/object"
 )
@@ -19,6 +20,15 @@ func RegisterFn(name string, def object.BuiltinFunction) {
 	RegisterBuiltin(name, &object.Builtin{
 		Fn: def,
 	})
+}
+
+func ListBuiltins() []string {
+	ret := []string{}
+	for b, _ := range builtins {
+		ret = append(ret, b)
+	}
+	sort.Strings(ret)
+	return ret
 }
 
 // GetFn returns function if defined
