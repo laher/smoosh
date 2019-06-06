@@ -26,7 +26,7 @@ func isPipedInput(in io.Reader) bool {
 
 func isFancyPrompt(in io.Reader) bool {
 	switch os.Getenv("TERM") {
-	case "xterm", "xterm-256color":
+	case "xterm", "xterm-256color", "screen-256color":
 		return true
 	}
 	return false

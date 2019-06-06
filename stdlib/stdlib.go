@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
+	"text/template"
 
-	"github.com/alecthomas/template"
 	"github.com/laher/smoosh/object"
 )
 
