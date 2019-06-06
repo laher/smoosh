@@ -18,7 +18,7 @@ import (
 
 // NewRunner initializes a Runner
 func NewRunner() *Runner {
-	return &Runner{true, true, false}
+	return &Runner{Parse: true, Evaluate: true, Format: false}
 }
 
 // Runner can run a repl or a program
@@ -26,6 +26,10 @@ type Runner struct {
 	Parse    bool
 	Evaluate bool
 	Format   bool
+
+	env      *object.Environment
+	macroEnv *object.Environment
+	streams  object.Streams
 }
 
 // RunFile runs a file as a single program
@@ -40,7 +44,7 @@ func (r *Runner) RunFile(filename string, out io.Writer, stderr io.Writer) error
 
 // Run runs an io.Reader as a single program
 func (r *Runner) Run(rdr io.Reader, out io.Writer, stderr io.Writer) error {
-	streams := object.Streams{
+	r.streams = object.Streams{
 		Stdin:  rdr,
 		Stdout: out,
 		Stderr: stderr,
@@ -49,12 +53,12 @@ func (r *Runner) Run(rdr io.Reader, out io.Writer, stderr io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("could not read: %v", err)
 	}
-	env := object.NewEnvironment(streams)
-	macroEnv := object.NewEnvironment(streams)
-	return r.runData(string(data), out, env, macroEnv)
+	r.env = object.NewEnvironment(r.streams)
+	r.macroEnv = object.NewEnvironment(r.streams)
+	return r.runData(string(data))
 }
 
-func (r *Runner) runData(data string, out io.Writer, env, macroEnv *object.Environment) error {
+func (r *Runner) runData(data string) error {
 	l := lexer.New(data)
 	if r.Parse {
 		p := parser.New(l)
@@ -64,21 +68,21 @@ func (r *Runner) runData(data string, out io.Writer, env, macroEnv *object.Envir
 		}
 
 		if r.Evaluate {
-			evaluator.DefineMacros(program, macroEnv)
-			expanded := evaluator.ExpandMacros(program, macroEnv)
-			result := evaluator.Eval(expanded, env)
+			evaluator.DefineMacros(program, r.macroEnv)
+			expanded := evaluator.ExpandMacros(program, r.macroEnv)
+			result := evaluator.Eval(expanded, r.env)
 			if result == nil {
 				return nil
 			}
 
-			switch r := result.(type) {
+			switch rT := result.(type) {
 			case *object.Null:
 				return nil
 			case *object.Error:
-				return fmt.Errorf("%s", r.Message)
+				return fmt.Errorf("%s", rT.Message)
 
 			case *object.Pipes:
-				pipes := r
+				pipes := rT
 				cmdOut, err := ioutil.ReadAll(pipes.Main)
 				if err != nil {
 					return err
@@ -87,30 +91,30 @@ func (r *Runner) runData(data string, out io.Writer, env, macroEnv *object.Envir
 				if err != nil {
 					return err
 				}
-				_, err = fmt.Fprintf(out, "%s", cmdOut)
+				_, err = fmt.Fprintf(r.streams.Stdout, "%s", cmdOut)
 				return err
 			}
 
-			_, err := io.WriteString(out, result.Inspect()+"\n")
+			_, err := io.WriteString(r.streams.Stdout, result.Inspect()+"\n")
 			return err
 		} else {
 			// TODO detect type-checking errors
 			// TODO detact macro errors
 		}
 		if r.Format {
-			_, err := io.WriteString(out, program.String())
+			_, err := io.WriteString(r.streams.Stdout, program.String())
 			return err
 		}
 		b, err := json.MarshalIndent(program, "", "  ")
 		if err != nil {
 			return err
 		}
-		_, err = fmt.Fprintf(out, "%s\n", string(b))
+		_, err = fmt.Fprintf(r.streams.Stdout, "%s\n", string(b))
 		return err
 
 	}
 	for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
-		_, err := fmt.Fprintf(out, "%#v\n", tok)
+		_, err := fmt.Fprintf(r.streams.Stdout, "%#v\n", tok)
 		if err != nil {
 			return err
 		}

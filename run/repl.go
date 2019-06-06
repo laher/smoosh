@@ -10,6 +10,7 @@ import (
 	"os/user"
 	"path"
 
+	"github.com/c-bata/go-prompt"
 	"github.com/laher/smoosh/object"
 )
 
@@ -23,47 +24,65 @@ func isPipedInput(in io.Reader) bool {
 	return false
 }
 
+func isFancyPrompt(in io.Reader) bool {
+	switch os.Getenv("TERM") {
+	case "xterm", "xterm-256color":
+		return true
+	}
+	return false
+}
+
 // Start starts a line-by-line processor
 func (r *Runner) Start(in io.Reader, out io.Writer, stderr io.Writer) {
-	streams := object.Streams{
+	r.streams = object.Streams{
 		Stdin:  in,
 		Stdout: out,
 		Stderr: stderr,
 	}
-	scanner := bufio.NewScanner(in)
-	env := object.NewEnvironment(streams)
-	macroEnv := object.NewEnvironment(streams)
+	r.env = object.NewEnvironment(r.streams)
+	r.macroEnv = object.NewEnvironment(r.streams)
 	user, err := user.Current()
 	if err != nil {
 		panic(err)
 	}
-	if isPipedInput(in) {
+	switch {
+	case isPipedInput(in):
 		all, err := ioutil.ReadAll(in)
 		if err != nil {
 			panic(err)
 		}
-		err = r.runData(string(all), out, env, macroEnv)
+		err = r.runData(string(all))
 		if err != nil {
 			panic(err)
 		}
-		return
-	}
-	for {
-		pwd, err := os.Getwd()
-		if err != nil {
-			panic(err)
-		}
-		prompt := fmt.Sprintf("[%s]/[%s]> ", user.Username, path.Base(pwd))
-		fmt.Printf(prompt)
-		scanned := scanner.Scan()
-		if !scanned {
-			return
-		}
+	case isFancyPrompt(in):
+		// fancy go-prompt for xterm and such
+		p := prompt.New(
+			r.promptExecutor,
+			r.promptCompleter,
+			prompt.OptionTitle("smoosh"),
+		)
+		p.Run()
+	default:
+		// super basic prompt
+		scanner := bufio.NewScanner(in)
+		for {
+			pwd, err := os.Getwd()
+			if err != nil {
+				panic(err)
+			}
+			prompt := fmt.Sprintf("[%s]/[%s]> ", user.Username, path.Base(pwd))
+			fmt.Printf(prompt)
+			scanned := scanner.Scan()
+			if !scanned {
+				return
+			}
 
-		line := scanner.Text()
-		err = r.runData(line, out, env, macroEnv)
-		if err != nil {
-			panic(err)
+			line := scanner.Text()
+			err = r.runData(line)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }
