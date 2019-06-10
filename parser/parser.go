@@ -90,6 +90,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.FOR, p.parseForExpression)
 	p.registerPrefix(token.RANGE, p.parseRangeExpression)
 	p.registerPrefix(token.BACKY, p.parseBacktickLiteral)
+	p.registerPrefix(token.STRING_INCOMPLETE, p.parseStringLiteralIncomplete)
 
 	// infix:
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
@@ -299,6 +300,10 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 
 func (p *Parser) parseStringLiteral() ast.Expression {
 	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal}
+}
+
+func (p *Parser) parseStringLiteralIncomplete() ast.Expression {
+	return &ast.StringLiteralIncomplete{Token: p.curToken, Value: p.curToken.Literal}
 }
 
 func (p *Parser) parseBacktickLiteral() ast.Expression {

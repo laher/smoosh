@@ -7,6 +7,7 @@ These tokens are operators, keywords, identifiers or values (strings, numbers, e
 package lexer
 
 import (
+	"errors"
 	"unicode/utf8"
 
 	"github.com/laher/smoosh/token"
@@ -80,8 +81,13 @@ func (l *Lexer) NextToken() token.Token {
 	case ')':
 		tok = newToken(token.RPAREN, l.ru, l.line)
 	case '"':
-		tok.Type = token.STRING
-		tok.Literal = l.readString()
+		var complete bool
+		tok.Literal, complete = l.readString()
+		if complete {
+			tok.Type = token.STRING
+		} else {
+			tok.Type = token.STRING_INCOMPLETE
+		}
 	case '[':
 		tok = newToken(token.LBRACKET, l.ru, l.line)
 	case ']':
@@ -92,8 +98,14 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.HASH, l.ru, l.line)
 		tok.Literal = l.readLine()
 	case '`':
-		tok.Type = token.BACKY
-		tok.Literal = l.readUntil('`')
+		var complete bool
+		tok.Literal, complete = l.readUntil('`')
+
+		if complete {
+			tok.Type = token.BACKY
+		} else {
+			tok.Type = token.BACKY_INCOMPLETE
+		}
 	case 0, utf8.RuneError:
 		tok.Literal = ""
 		tok.Type = token.EOF
@@ -144,19 +156,25 @@ func (l *Lexer) readNumber() string {
 	return l.read(isDigit)
 }
 
-func (l *Lexer) readString() string {
+func (l *Lexer) readString() (string, bool) {
 	return l.readUntil('"')
 }
 
-func (l *Lexer) readUntil(ru rune) string {
+var errIncompleteString = errors.New("incomplete")
+
+func (l *Lexer) readUntil(ru rune) (string, bool) {
 	position := l.position + 1
+	complete := false
 	for {
 		l.readRune()
-		if l.ru == ru || l.ru == utf8.RuneError || l.ru == 0 {
+		if l.ru == ru {
+			complete = true
+			break
+		} else if l.ru == utf8.RuneError || l.ru == 0 {
 			break
 		}
 	}
-	return l.input[position:l.position]
+	return l.input[position:l.position], complete
 }
 
 func (l *Lexer) readLine() string {

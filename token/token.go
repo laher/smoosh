@@ -3,60 +3,64 @@ package token
 type TokenType string
 
 const (
-	ILLEGAL = "ILLEGAL"
-	EOF     = "EOF"
+	ILLEGAL TokenType = "ILLEGAL"
+	EOF               = "EOF"
 
 	// Identifiers + literals
-	IDENT  = "IDENT"  // add, foobar, x, y, ...
-	INT    = "INT"    // 1343456
-	STRING = "STRING" // "foobar"
-	BACKY  = "BACKY"  // `ls -l`
+	IDENT  TokenType = "IDENT"  // add, foobar, x, y, ...
+	INT    TokenType = "INT"    // 1343456
+	STRING TokenType = "STRING" // "foobar"
+
+	BACKY TokenType = "BACKY" // `ls -l`
+
+	STRING_INCOMPLETE TokenType = "STRING_INCOMPLETE" // "foobar
+	BACKY_INCOMPLETE  TokenType = "BACKY_INCOMPLETE"  // "foobar
 
 	// Operators
-	ASSIGN   = "="
-	PLUS     = "+"
-	MINUS    = "-"
-	BANG     = "!"
-	ASTERISK = "*"
-	SLASH    = "/"
+	ASSIGN   TokenType = "="
+	PLUS     TokenType = "+"
+	MINUS    TokenType = "-"
+	BANG     TokenType = "!"
+	ASTERISK TokenType = "*"
+	SLASH    TokenType = "/"
 
-	LT = "<"
-	GT = ">"
+	LT TokenType = "<"
+	GT TokenType = ">"
 
-	EQ     = "=="
-	NOT_EQ = "!="
+	EQ     TokenType = "=="
+	NOT_EQ TokenType = "!="
 
 	// Delimiters
-	COMMA     = ","
-	SEMICOLON = ";"
-	COLON     = ":"
+	COMMA     TokenType = ","
+	SEMICOLON TokenType = ";"
+	COLON     TokenType = ":"
 
-	LPAREN   = "("
-	RPAREN   = ")"
-	LBRACE   = "{"
-	RBRACE   = "}"
-	LBRACKET = "["
-	RBRACKET = "]"
+	LPAREN   TokenType = "("
+	RPAREN   TokenType = ")"
+	LBRACE   TokenType = "{"
+	RBRACE   TokenType = "}"
+	LBRACKET TokenType = "["
+	RBRACKET TokenType = "]"
 
 	// Keywords
-	FUNCTION = "FUNCTION"
-	VAR      = "VAR"
-	TRUE     = "TRUE"
-	FALSE    = "FALSE"
-	IF       = "IF"
-	ELSE     = "ELSE"
-	RETURN   = "RETURN"
-	FOR      = "FOR"
-	RANGE    = "RANGE"
+	FUNCTION TokenType = "FUNCTION"
+	VAR      TokenType = "VAR"
+	TRUE     TokenType = "TRUE"
+	FALSE    TokenType = "FALSE"
+	IF       TokenType = "IF"
+	ELSE     TokenType = "ELSE"
+	RETURN   TokenType = "RETURN"
+	FOR      TokenType = "FOR"
+	RANGE    TokenType = "RANGE"
 
 	// Execution
-	PIPE = "|"
+	PIPE TokenType = "|"
 
-	HASH = "#"
+	HASH TokenType = "#"
 
-	BACKTICK = "`"
+	BACKTICK TokenType = "`"
 
-	MACRO = "MACRO"
+	MACRO TokenType = "MACRO"
 )
 
 type Token struct {
